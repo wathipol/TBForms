@@ -4,7 +4,7 @@ Small extension for [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegramBo
 ## Contents
 
   * [Install](#install)
-  * [Example build simple form](#example-build-simple-form)
+  * [Example](#example-build-simple-form)
   * [Docs](#docs)
     * [TelebotForms](#telebotforms-1)
       * [Init](#init)
