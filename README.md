@@ -9,8 +9,15 @@ Small extension for [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegramBo
     * [TelebotForms](#telebotforms-1)
       * [Init](#init)
       * [Settings](#settings)
-      * [Methods](#settings)
+      * [Methods](#methods)
     * [BaseForm](#baseform)
+      * [Parameters](#parameters)
+      * [Fields](#fields)
+        * [StrField](#strfield)
+        * [MediaField](#mediafield)
+        * [NumberField](#numberfield)
+        * [BooleanField](#booleanfield)
+        * [ChooseField](#choosefield)
 
 ## Install
 ```
