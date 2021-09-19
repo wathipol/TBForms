@@ -19,19 +19,18 @@ class TestRegisterForm(BaseForm):
     name = fields.StrField("Name","Enter your name:")
     age = fields.NumberField("Age","Select your age:",only_int=True,key_mode=True)
     sex = fields.ChooseField("Sex","Select your sex:",answer_list=["male","female"])
-    photo = fields.MediaField("Photo","Enter your photo:",required=False,error_message="Error. You can only send a photo")
+    photo = fields.MediaField("Photo","Enter your photo:",valid_types=['photo'],required=False,error_message="Error. You can only send a photo")
     freeze_mode = True
     close_form_but = False
-    submit_button_text = "Register" 
-  
+    submit_button_text = "Register"
+
 @bot.message_handler(commands=['start'])
 def start_update(message):
-  tbf.send_form(message.chat.id,TestRegisterForm())
+    tbf.send_form(message.chat.id,TestRegisterForm())
 
 @tbf.form_submit_event("submit_register_form")
 def submit_register_update(call,form_data):
-  print(form_data) # Completed form data
-  bot.send_message(call.message.chat.id,"Successful registration")
+    print(form_data) # Completed form data
+    bot.send_message(call.message.chat.id,"Successful registration")
 
 ```
-
