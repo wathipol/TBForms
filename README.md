@@ -1,6 +1,17 @@
 # TelebotForms
 Small extension for [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegramBotAPI) library for building interactive forms in Telegram bots.
 
+## Contents
+
+  * [Install](#install)
+  * [Example build simple form](#example-build-simple-form)
+  * [Docs](#docs)
+    * [TelebotForms](#telebotforms-1)
+      * [Init](#init)
+      * [Settings](#settings)
+      * [Methods](#settings)
+    * [BaseForm](#baseform)
+
 ## Install
 ```
 $ pip install TbfForms
