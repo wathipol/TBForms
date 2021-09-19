@@ -86,6 +86,7 @@ tbf.GLOBAL_INVALID_INPUT_TEXT = "Error. Invalide input!"
 
 #### Methods
 
+##### Send forms
 * send_form - Send form to chat
 
 | Args  | Required? |  Default  |  Type   | Description     |
@@ -93,6 +94,7 @@ tbf.GLOBAL_INVALID_INPUT_TEXT = "Error. Invalide input!"
 | chat_id  | Yes  |   | int  |Chat id for send form |
 | form  | Yes  |  | tb_forms.BaseForm | TbfForms Form object |
 
+##### Handle form
 * form_submit_event - handle submit form event
 
 | Args  | Required? |  Default  |  Type   | Description     |
@@ -140,10 +142,85 @@ def form_event_update(call,form_data):
 | form_global_error_message | No  |   | str  | Global form default error message text  |
 | form_valid_error | No  | "Error! You may have filled in some of the fields incorrectly. ⚠️" | str  | Form default pre-submit validation error message text |
 
+#### Fields
+```python
+from tb_forms import fields
+```
 
+##### StrField 
+Simple input text
+```
+-> str
+```
+| Args  | Required? |  Default  |  Type   | Description     |
+| ------------- | ------------- |------------- |------------- |------------- |
+| title | Yes  |   | str  |Field button title in form |
+| input_text | Yes  |  | str  | Input message text |
+| required | No  | True  | bool  | required for submit? |
+| default_value | No  |  | str  | Default field value |
+| validators | No  |  | List[Callable \| tb_forms.validators.Validator  ]  | Default field value |
+| error_message | No  |  | str  | Validation error message text |
 
+##### MediaField
+Telegram Media input field
+```python
+-> tb_forms.tbf_types.MediaData
+```
+| Args  | Required? |  Default  |  Type   | Description     |
+| ------------- | ------------- |------------- |------------- |------------- |
+| title | Yes  |   | str  |Field button title in form |
+| input_text | Yes  |  | str  | Input message text |
+| required | No  | True  | bool  | required for submit? |
+| validators | No  |  | List[Callable \| tb_forms.validators.Validator  ]  | Default field value |
+| error_message | No  |  | str  | Validation error message text |
+| valid_types | No  | All  | List[str]  | Aviable content_type for input |
+| caption_required | No  | False | bool  | Required caption with media |
+| only_text_aviable | No  | False | bool  | Aviable only text message |
 
+##### NumberField
+Input int or float value
+```python
+-> Union[int,float]
+```
+| Args  | Required? |  Default  |  Type   | Description     |
+| ------------- | ------------- |------------- |------------- |------------- |
+| title | Yes  |   | str  |Field button title in form |
+| input_text | Yes  |  | str  | Input message text |
+| required | No  | True  | bool  | required for submit? |
+| validators | No  |  | List[Callable \| tb_forms.validators.Validator  ]  | Default field value |
+| error_message | No  |  | str  | Validation error message text |
+| only_text_aviable | No  | False | bool  | Input only int value |
+| key_mode | No  | False | bool  | Input value from inline keyboard |
+| input_range | No  | (1,99) | tuple  | key_mode input range |
 
+##### BooleanField
+True\False input
+```python
+-> bool
+```
+| Args  | Required? |  Default  |  Type   | Description     |
+| ------------- | ------------- |------------- |------------- |------------- |
+| title | Yes  |   | str  |Field button title in form |
+| input_text | Yes  |  | str  | Input message text |
+| required | No  | True  | bool  | required for submit? |
+| default_value | No  |  | str  | Default field value |
+| validators | No  |  | List[Callable \| tb_forms.validators.Validator  ]  | Default field value |
+| error_message | No  |  | str  | Validation error message text |
 
-
+##### ChooseField
+Select input from list of values
+```python
+-> bool
+```
+| Args  | Required? |  Default  |  Type   | Description     |
+| ------------- | ------------- |------------- |------------- |------------- |
+| title | Yes  |   | str  |Field button title in form |
+| input_text | Yes  |  | str  | Input message text |
+| required | No  | True  | bool  | required for submit? |
+| default_value | No  |  | str  | Default field value |
+| validators | No  |  | List[Callable \| tb_forms.validators.Validator  ]  | Default field value |
+| error_message | No  |  | str  | Validation error message text |
+| answer_list | Yes  | [] | list  | Values for select |
+| multiple | No  | False | bool  | Aviable multiple select |
+| answer_mapping | No  |  | dict  | Dictionary for replace return selected value |
 
