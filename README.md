@@ -45,11 +45,11 @@ def submit_register_update(call,form_data):
 | bot  | Yes  |   | telebot.TeleBot object  |pyTelegramBotAPI bot object |
 | fsm  | No  | tb_forms.ffsm.MemoryFSM | tb_forms.ffsm.FSM | TbfForms FSM object |
 
-#### Settings 
+#### Settings
 ```python
 tbf = TelebotForms(bot)
 
-# Global icon for a missing value field 
+# Global icon for a missing value field
 tbf.GLOBAL_MISSING_VALUE_ICON: str = "💢"
 
 # Global icon for a field with data  
@@ -67,14 +67,14 @@ tbf.GLOBAL_CANCEL_BUTTON_TEXT = lambda user_id: "Cancel"
 tbf.GLOBAL_SUBMIT_BUTTON_TEXT: str = "Submit"
 
 # Global close button in form
-tbf.GLOBAL_CLOSE_FORM_BUT:bool = True
+tbf.GLOBAL_CLOSE_FORM_BUT: bool = True
 
-''' Global form freeze mode. 
+''' Global form freeze mode.
 If True, prohibits any action prior to submitting or canceling the  form. '''
-tbf.GLOBAL_FREEZE_MODE:bool = True
+tbf.GLOBAL_FREEZE_MODE: bool = True
 
-''' Global freeze mode alart text. 
-If freeze_mode is True, sends this text after any action. 
+''' Global freeze mode alart text.
+If freeze_mode is True, sends this text after any action.
   Type: Union[Str,Callable]   '''
 tbf.GLOBAL_STOP_FREEZE_TEXT = "Cancel or submit the form first before proceeding further"
 
@@ -123,8 +123,27 @@ def cancel_form_update(call,form_data):
 ```python
 @tbf.form_event("update_name",action=["submit","cancel"])
 def form_event_update(call,form_data):
-    print(form_data.update_action)
+    print(form_data.update_action) # event action type
 ```
+### BaseForm
+#### Parameters
+| Args  | Required? |  Default  |  Type   | Description     |
+| ------------- | ------------- |------------- |------------- |------------- |
+| update_name | Yes  |   | str  |update name for handle event |
+| MISSING_VALUE_ICON | No  | "💢"  | str  | Icon for a missing value field |
+| EDIT_ICON | No  | "✏️"  | str  | Icon for a field with data  |
+| freeze_mode | No  | False  | bool  | Form freeze mode. If True, prohibits any action prior to submitting or canceling the  form. |
+| close_form_but | No  | False  | bool  | Show close form button  |
+| submit_button_text | No  | "Submit"  | str  | Form submit button text  |
+| cancel_button_text | No  | "Cancel"  | str  | Cancel form\input button text  |
+| input_not_valid | No  | "Invalid input..."  | str  | Invalide input default error message text  |
+| form_global_error_message | No  |   | str  | Global form default error message text  |
+| form_valid_error | No  | "Error! You may have filled in some of the fields incorrectly. ⚠️" | str  | Form default pre-submit validation error message text |
+
+
+
+
+
 
 
 
