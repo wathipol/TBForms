@@ -18,6 +18,9 @@ Small extension for [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegramBo
         * [NumberField](#numberfield)
         * [BooleanField](#booleanfield)
         * [ChooseField](#choosefield)
+    * [Advanced](#advanced)
+      * [Pre-submit events](#pre-submit-events)
+      * [Pre-submit validation](#pre-submit-validation)
 
 ## Install
 ```
@@ -242,3 +245,10 @@ Select input from list of values
 | multiple | No  | False | bool  | Aviable multiple select |
 | answer_mapping | No  |  | dict  | Dictionary for replace return selected value |
 
+### Advanced
+
+#### Pre-submit events
+...
+
+#### Pre-submit validation
+...
