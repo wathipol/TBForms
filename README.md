@@ -7,7 +7,7 @@ $ pip install TbfForms
 ```
 ## Example build simple form
 ```python
-from tb_forms import TelebotForms,ffsm,BaseForm,fields
+from tb_forms import TelebotForms,BaseForm,fields
 from telebot import TeleBot
 
 bot = TeleBot("your_token")
@@ -34,3 +34,97 @@ def submit_register_update(call,form_data):
     bot.send_message(call.message.chat.id,"Successful registration")
 
 ```
+## Docs
+
+### TelebotForms
+
+#### Init
+
+| Args  | Required? |  Default  |  Type   | Description     |
+| ------------- | ------------- |------------- |------------- |------------- |
+| bot  | Yes  |   | telebot.TeleBot object  |pyTelegramBotAPI bot object |
+| fsm  | No  | tb_forms.ffsm.MemoryFSM | tb_forms.ffsm.FSM | TbfForms FSM object |
+
+#### Settings 
+```python
+tbf = TelebotForms(bot)
+
+# Global icon for a missing value field 
+tbf.GLOBAL_MISSING_VALUE_ICON: str = "💢"
+
+# Global icon for a field with data  
+tbf.GLOBAL_EDIT_ICON: str = "✏️"
+
+''' Global cancel form button text
+  Type: Union[Str,Callable]   '''
+tbf.GLOBAL_CANCEL_BUTTON_TEXT = "Cancel"
+# Callable example
+tbf.GLOBAL_CANCEL_BUTTON_TEXT = lambda user_id: "Cancel"
+
+
+
+# Global submit form button text
+tbf.GLOBAL_SUBMIT_BUTTON_TEXT: str = "Submit"
+
+# Global close button in form
+tbf.GLOBAL_CLOSE_FORM_BUT:bool = True
+
+''' Global form freeze mode. 
+If True, prohibits any action prior to submitting or canceling the  form. '''
+tbf.GLOBAL_FREEZE_MODE:bool = True
+
+''' Global freeze mode alart text. 
+If freeze_mode is True, sends this text after any action. 
+  Type: Union[Str,Callable]   '''
+tbf.GLOBAL_STOP_FREEZE_TEXT = "Cancel or submit the form first before proceeding further"
+
+''' Global invalide input error text.  
+  Type: Union[Str,Callable]   '''
+tbf.GLOBAL_INVALID_INPUT_TEXT = "Error. Invalide input!"
+
+```
+
+#### Methods
+
+* send_form - Send form to chat
+
+| Args  | Required? |  Default  |  Type   | Description     |
+| ------------- | ------------- |------------- |------------- |------------- |
+| chat_id  | Yes  |   | int  |Chat id for send form |
+| form  | Yes  |  | tb_forms.BaseForm | TbfForms Form object |
+
+* form_submit_event - handle submit form event
+
+| Args  | Required? |  Default  |  Type   | Description     |
+| ------------- | ------------- |------------- |------------- |------------- |
+| update_name | Yes  |   | str  |update_name of form to handle |
+```python
+@tbf.form_submit_event("update_name")
+def submit_update(call,form_data):
+    pass
+```
+* form_cancel_event - handle cancel form event
+
+| Args  | Required? |  Default  |  Type   | Description     |
+| ------------- | ------------- |------------- |------------- |------------- |
+| update_name | Yes  |   | str  |update_name of form to handle |
+```python
+@tbf.form_cancel_event("update_name")
+def cancel_form_update(call,form_data):
+    pass
+
+```
+* form_event - handle all form event
+
+| Args  | Required? |  Default  |  Type   | Description     |
+| ------------- | ------------- |------------- |------------- |------------- |
+| update_name | Yes  |   | str  |update_name of form to handle |
+| action | Yes  |   | list  | handle events type |
+```python
+@tbf.form_event("update_name",action=["submit","cancel"])
+def form_event_update(call,form_data):
+    print(form_data.update_action)
+```
+
+
+
