@@ -1,5 +1,11 @@
+<img src="https://cdn2.iconfinder.com/data/icons/social-media-2421/512/Telegram-128.png" align="right" width="131" />
+
 # TelebotForms
+[![PyPI version](https://badge.fury.io/py/TBForms.svg)](https://badge.fury.io/py/TBForms)
+[![License](https://img.shields.io/pypi/l/TBForms)](https://github.com/wathipol/TBForms/blob/master/LICENSE)
+
 Small extension for [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegramBotAPI) library for building interactive forms in Telegram bots.
+<hr/>
 
 ## Contents
 
