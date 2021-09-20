@@ -3,8 +3,8 @@ Small extension for [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegramBo
 
 ## Contents
 
-  * [Install](#install)
-  * [Example](#example-build-simple-form)
+  * [Installation](#install)
+  * [Quickstart](#example-build-simple-form)
   * [Docs](#docs)
     * [TelebotForms](#telebotforms-1)
       * [Init](#init)
@@ -23,7 +23,7 @@ Small extension for [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegramBo
       * [Field visibility](#field-visibility)
       * [Pre-submit events](#pre-submit-events)
 
-## Install
+## Installation
 ```
 $ pip install TBForms
 ```
@@ -36,7 +36,7 @@ Demo for [Example](#example-build-simple-form)
 
 
 
-## Example build simple form
+## Quickstart
 ```python
 from tb_forms import TelebotForms,BaseForm,fields
 from telebot import TeleBot
