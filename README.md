@@ -19,8 +19,9 @@ Small extension for [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegramBo
         * [BooleanField](#booleanfield)
         * [ChooseField](#choosefield)
     * [Advanced](#advanced)
-      * [Pre-submit events](#pre-submit-events)
       * [Pre-submit validation](#pre-submit-validation)
+      * [Field visibility](#field-visibility)
+      * [Pre-submit events](#pre-submit-events)
 
 ## Install
 ```
@@ -257,7 +258,7 @@ def form_validator (self, call, form_data) -> Union[bool,str]
 ```
 The form will be submitted only if the function returns True, if the function returns Str, this will be the error text, and the default error will be used if the function returns False
 
-**Example:**
+##### Example
 ```python
 class TestRegisterForm(BaseForm):
     update_name = "submit_register_form"
@@ -300,7 +301,7 @@ new_field = {"terms":fields.BooleanField("Terms of use","Accept terms of use:")}
 form.field_from_dict(new_field)
 ```
 
-##### Hide/Show field
+##### Field visibility
 
 ```python
 class TestRegisterForm(BaseForm):
