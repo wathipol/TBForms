@@ -168,7 +168,7 @@ def form_event_update(call,form_data):
 from tb_forms import fields
 ```
 
-##### StrField 
+##### StrField
 Simple input text
 ```
 -> str
@@ -247,8 +247,125 @@ Select input from list of values
 
 ### Advanced
 
-#### Pre-submit events
-...
-
 #### Pre-submit validation
-...
+Form validation before submitting
+
+##### How it works?
+You must override the function
+```python
+def form_validator (self, call, form_data) -> Union[bool,str]
+```
+The form will be submitted only if the function returns True, if the function returns Str, this will be the error text, and the default error will be used if the function returns False
+
+**Example:**
+```python
+class TestRegisterForm(BaseForm):
+    update_name = "submit_register_form"
+    form_title = "TBF Test Register Form"
+    name = fields.StrField("Name","Enter your name:")
+    age = fields.NumberField("Age","Select your age:",only_int=True,key_mode=True)
+    sex = fields.ChooseField("Sex","Select your sex:",answer_list=["male","female"])
+    photo = fields.MediaField("Photo","Enter your photo:",valid_types=['photo'],required=False,error_message="Error. You can only send a photo")
+    freeze_mode = True
+    close_form_but = False
+    submit_button_text = "Register"
+
+    def form_validator(self,call,form_data):
+        if form_data.age < 18:
+            return "You must be at least 18 years old to use the bot"
+        return True
+```
+
+
+#### Fields work
+
+##### Add new field
+
+
+
+```python
+class TestRegisterForm(BaseForm):
+    update_name = "submit_register_form"
+    form_title = "TBF Test Register Form"
+    name = fields.StrField("Name","Enter your name:")
+    age = fields.NumberField("Age","Select your age:",only_int=True,key_mode=True)
+    sex = fields.ChooseField("Sex","Select your sex:",answer_list=["male","female"])
+    photo = fields.MediaField("Photo","Enter your photo:",valid_types=['photo'],required=False,error_message="Error. You can only send a photo")
+    freeze_mode = True
+    close_form_but = False
+    submit_button_text = "Register"
+
+form = TestRegisterForm()
+new_field = {"terms":fields.BooleanField("Terms of use","Accept terms of use:")}
+form.field_from_dict(new_field)
+```
+
+##### Hide/Show field
+
+```python
+class TestRegisterForm(BaseForm):
+    update_name = "submit_register_form"
+    form_title = "TBF Test Register Form"
+    name = fields.StrField("Name","Enter your name:")
+    age = fields.NumberField("Age","Select your age:",only_int=True,key_mode=True)
+    sex = fields.ChooseField("Sex","Select your sex:",answer_list=["male","female"])
+    photo = fields.MediaField("Photo","Enter your photo:",valid_types=['photo'],required=False,error_message="Error. You can only send a photo")
+    terms = fields.BooleanField("Terms of use","Accept terms of use:")
+    freeze_mode = True
+    close_form_but = False
+    submit_button_text = "Register"
+
+form = TestRegisterForm()
+
+# Hide Field
+form.hide_field("terms")
+
+# Show Field
+form.show_field("terms")
+
+
+```
+
+
+
+#### Pre-submit events
+Events when using the form before cancel/submit
+
+##### How it works?
+You must override the function
+```python
+def event_listener(self, event: tb_form.FormEvent, form_data)
+```
+This is how you can receive all events inside the form. In the Form Event object, you can get the type of the event.
+
+#### FormEvent aviable types
+* field_input - event after input any field. "event_data" is Field object.
+* field_input_invalid - event after invalid input any field. "event_data" is Field object.
+
+##### Example
+
+```python
+class TestRegisterForm(BaseForm):
+    update_name = "submit_register_form"
+    form_title = "TBF Test Register Form"
+    name = fields.StrField("Name","Enter your name:")
+    age = fields.NumberField("Age","Select your age:",only_int=True,key_mode=True)
+    sex = fields.ChooseField("Sex","Select your sex:",answer_list=["male","female"])
+    photo = fields.MediaField("Photo","Enter your photo:",valid_types=['photo'],required=False,error_message="Error. You can only send a photo")
+    terms = fields.BooleanField("Terms of use","Accept terms of use:")
+    self.hide_field("terms")
+    freeze_mode = True
+    close_form_but = False
+    submit_button_text = "Register"
+
+    def event_listener(self, event: tb_form.FormEvent, form_data):
+        if event.event_type == "field_input":
+            # Show terms field only for 18+ age input
+            if event.event_data.name_in_form == "age":
+                if form_data.age >= 18:
+                  self.hide_field("terms")
+                else:
+                  self.show_field("terms")
+
+
+```
