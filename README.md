@@ -80,7 +80,7 @@ def submit_register_update(call,form_data):
 | Args  | Required? |  Default  |  Type   | Description     |
 | ------------- | ------------- |------------- |------------- |------------- |
 | bot  | Yes  |   | telebot.TeleBot |pyTelegramBotAPI bot object |
-| fsm  | No  | tb_forms.ffsm.MemoryFSM | tb_forms.ffsm.FSM | TbfForms FSM object |
+| fsm  | No  | tb_forms.ffsm.MemoryFSM | tb_forms.ffsm.FSM | TBForms FSM object |
 
 #### Settings
 ```python
