@@ -3,8 +3,6 @@
 *.env
 demo.mp4
 test.py
-*.dnhistory
-*.dnconfig
 **/__pycache__/
 *.DS_Store
 **/.DS_Store
