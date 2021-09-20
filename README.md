@@ -25,7 +25,7 @@ Small extension for [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegramBo
 
 ## Install
 ```
-$ pip install TbfForms
+$ pip install TBForms
 ```
 
 ## Demo
