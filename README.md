@@ -4,7 +4,7 @@ Small extension for [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegramBo
 ## Contents
 
   * [Installation](#install)
-  * [Quickstart](#example-build-simple-form)
+  * [Quickstart](#quickstart)
   * [Docs](#docs)
     * [TelebotForms](#telebotforms-1)
       * [Init](#init)
@@ -30,7 +30,7 @@ $ pip install TBForms
 
 ## Demo
 
-Demo for [Example](#example-build-simple-form)
+Demo for [Example](#quickstart)
 
 <img src="docs/demo.gif" width="250" />
 
