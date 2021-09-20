@@ -1,6 +1,8 @@
 *.pyc
 *.pyo
 *.env
+demo.mp4
+test.py
 *.dnhistory
 *.dnconfig
 **/__pycache__/

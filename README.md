@@ -27,6 +27,15 @@ Small extension for [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegramBo
 ```
 $ pip install TbfForms
 ```
+
+## Demo
+
+Demo for [Example](#example-build-simple-form)
+
+<img src="docs/demo.gif" width="250" />
+
+
+
 ## Example build simple form
 ```python
 from tb_forms import TelebotForms,BaseForm,fields
