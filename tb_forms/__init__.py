@@ -261,6 +261,7 @@ class TelebotForms:
             raise Expetion("form must be like BaseForm")
         keyboard = types.InlineKeyboardMarkup()
         fields_markup = form.get_fields()
+        print("DATA: ",fields_markup)
         text = form.get_form_text()
         settings = self._get_form_settings(form,prepare_update=user_id)
         for f in fields_markup:
@@ -284,6 +285,7 @@ class TelebotForms:
         parse_mode = None
         if form.form_title:
             parse_mode = "Markdown"
+        self.bot.send_message(user_id,text)
         msg = self.bot.send_message(user_id,text,reply_markup=keyboard,parse_mode=parse_mode,disable_web_page_preview=True)
         form.last_msg_id = msg.message_id
         self.fsm.set_state(int(user_id),idle_state,life_time = settings["LIFE_TIME"],form=form._form_dumps())

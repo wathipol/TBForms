@@ -1,7 +1,6 @@
 *.pyc
 *.pyo
 *.env
-demo.mp4
 test.py
 **/__pycache__/
 *.DS_Store

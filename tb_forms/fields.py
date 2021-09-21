@@ -254,13 +254,16 @@ class BooleanField(Field):
 class ChooseField(Field):
     selected_icon = "✅"
     back_button_text = "🔙"
-    def __init__(self,title=None,input_text=None,answer_list=[],multiple=False,required=True,read_only=False,error_message=None,field_hidden_data=None,answer_mapping=None,validators=[]):
+    def __init__(self,title=None,input_text=None,answer_list=[],multiple=False,required=True,read_only=False,error_message=None,pagination_after=50,button_in_row=8,field_hidden_data=None,answer_mapping=None,validators=[]):
         self.answer_list = answer_list
         self.multiple = multiple
         self.answer_mapping = answer_mapping
+        self._offset = 0
+        self.button_in_row = button_in_row
+        self.pagination_after = pagination_after
         super().__init__(title=title,input_text=input_text,validators=validators,required=required,read_only=read_only,value_from_callback=True,error_message=error_message,field_hidden_data=field_hidden_data)
+        self.value_from_callback_manual_mode = True
         if self.multiple:
-            self.value_from_callback_manual_mode = True
             self.without_system_key = True
 
     def format_return_value(self,upd):
@@ -274,7 +277,10 @@ class ChooseField(Field):
     def create_variables_keys(self):
         keyboard = types.InlineKeyboardMarkup()
         key_list = []
-        for i in self.answer_list:
+        iter_list = self.answer_list[:self._offset]
+        if len(self.answer_list) <= self.pagination_after and self._offset == 0:
+            iter_list = self.answer_list
+        for i in iter_list:
             v_id = self._append_variable_data(i)
             s_icon = ""
             if self.value != None:
@@ -283,8 +289,10 @@ class ChooseField(Field):
             text = "{}{}".format(i,s_icon)
             key = types.InlineKeyboardButton(text=text, callback_data=DEFAULT_VALUE_FROM_CALLBACK_PATTERN.format(v_id))
             key_list.append(key)
-        for row in split_list(key_list,8):
+        for row in split_list(key_list,self.button_in_row):
             keyboard.row(*row)
+        if len(self.answer_list) > self.pagination_after:
+            keyboard.row(*[types.InlineKeyboardButton(text="➡️", callback_data=DEFAULT_VALUE_FROM_CALLBACK_PATTERN.format("next_page 0"))])
         if self.multiple:
             keyboard.row(types.InlineKeyboardButton(text=self.back_button_text, callback_data=DEFAULT_VALUE_FROM_CALLBACK_PATTERN.format("save_field")))
         return keyboard
@@ -294,17 +302,23 @@ class ChooseField(Field):
         new_value_id = call.data.split(":")[2]
         if str(new_value_id) == "save_field":
             tbf.bot.delete_message(call.message.chat.id,call.message.message_id)
-            msg = tbf.send_form(call.from_user.id,form)
-            return msg
-        new_value = self.get_variable_data(new_value_id)
-        if self.value == None:
-            self.value = [self.format_return_value(new_value)]
+            return tbf.send_form(call.from_user.id,form)
+        elif str(new_value_id).split(" ")[0] == "next_page":
+            print(new_value_id)
         else:
-            if self.format_return_value(new_value) in self.value:
-                ind = self.value.index(self.format_return_value(new_value))
-                del self.value[ind]
+            new_value = self.get_variable_data(new_value_id)
+            if not self.multiple:
+                self.value = self.format_return_value(new_value)
+                tbf.bot.delete_message(call.message.chat.id,call.message.message_id)
+                return tbf.send_form(call.from_user.id,form)
+            if self.value == None:
+                self.value = [self.format_return_value(new_value)]
             else:
-                self.value.append(self.format_return_value(new_value))
+                if self.format_return_value(new_value) in self.value:
+                    ind = self.value.index(self.format_return_value(new_value))
+                    del self.value[ind]
+                else:
+                    self.value.append(self.format_return_value(new_value))
         new_keyboard =  self.create_variables_keys()
         tbf.fsm.set_state(call.from_user.id,FSM_GET_FIELD_VALUE, form=form._form_dumps(),field_id=self._id)
         msg = tbf.bot.edit_message_reply_markup(chat_id=call.message.chat.id,message_id=call.message.message_id,reply_markup=new_keyboard)
