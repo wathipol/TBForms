@@ -261,7 +261,6 @@ class TelebotForms:
             raise Expetion("form must be like BaseForm")
         keyboard = types.InlineKeyboardMarkup()
         fields_markup = form.get_fields()
-        print("DATA: ",fields_markup)
         text = form.get_form_text()
         settings = self._get_form_settings(form,prepare_update=user_id)
         for f in fields_markup:

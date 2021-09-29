@@ -277,12 +277,9 @@ class ChooseField(Field):
     def create_variables_keys(self):
         keyboard = types.InlineKeyboardMarkup()
         key_list = []
-        iter_list = self.answer_list
-        if len(self.answer_list) > self.pagination_after:
-            if self._offset == 0:
-                iter_list = self.answer_list[:self.pagination_after]
-            else:
-                iter_list = self.answer_list[(self._offset * self.pagination_after):]
+        iter_list = self.answer_list[:self._offset]
+        if len(self.answer_list) <= self.pagination_after and self._offset == 0:
+            iter_list = self.answer_list
         for i in iter_list:
             v_id = self._append_variable_data(i)
             s_icon = ""
@@ -295,10 +292,7 @@ class ChooseField(Field):
         for row in split_list(key_list,self.button_in_row):
             keyboard.row(*row)
         if len(self.answer_list) > self.pagination_after:
-            if len(self.answer_list[((self._offset + 1) * self.pagination_after):]) != 0:
-                keyboard.row(*[types.InlineKeyboardButton(text="➡️", callback_data=DEFAULT_VALUE_FROM_CALLBACK_PATTERN.format("next_page"))])
-            if self._offset != 0:
-                keyboard.row(*[types.InlineKeyboardButton(text="⬅️", callback_data=DEFAULT_VALUE_FROM_CALLBACK_PATTERN.format("back_page"))])
+            keyboard.row(*[types.InlineKeyboardButton(text="➡️", callback_data=DEFAULT_VALUE_FROM_CALLBACK_PATTERN.format("next_page 0"))])
         if self.multiple:
             keyboard.row(types.InlineKeyboardButton(text=self.back_button_text, callback_data=DEFAULT_VALUE_FROM_CALLBACK_PATTERN.format("save_field")))
         return keyboard
@@ -308,20 +302,15 @@ class ChooseField(Field):
         new_value_id = call.data.split(":")[2]
         if str(new_value_id) == "save_field":
             tbf.bot.delete_message(call.message.chat.id,call.message.message_id)
-            self._offset = 0
-            return tbf.send_form(call.from_user.id,form,need_init=False)
-        elif str(new_value_id) == "next_page":
-            if len(self.answer_list[((self._offset + 1) * self.pagination_after):]) != 0:
-                self._offset += 1
-        elif str(new_value_id) == "back_page":
-            if self._offset != 0:
-                self._offset -= 1
+            return tbf.send_form(call.from_user.id,form)
+        elif str(new_value_id).split(" ")[0] == "next_page":
+            print(new_value_id)
         else:
             new_value = self.get_variable_data(new_value_id)
             if not self.multiple:
                 self.value = self.format_return_value(new_value)
                 tbf.bot.delete_message(call.message.chat.id,call.message.message_id)
-                return tbf.send_form(call.from_user.id,form,need_init=False)
+                return tbf.send_form(call.from_user.id,form)
             if self.value == None:
                 self.value = [self.format_return_value(new_value)]
             else:
@@ -331,10 +320,6 @@ class ChooseField(Field):
                 else:
                     self.value.append(self.format_return_value(new_value))
         new_keyboard =  self.create_variables_keys()
-        if not self.multiple:
-            settings = tbf._get_form_settings(form,prepare_update=call.message.chat.id)
-            cancel_key = types.InlineKeyboardButton(text=settings["CANCEL_BUTTON_TEXT"], callback_data=DEFAULT_VALUE_FROM_CALLBACK_PATTERN.format("save_field"))
-            new_keyboard.row(cancel_key)
         tbf.fsm.set_state(call.from_user.id,FSM_GET_FIELD_VALUE, form=form._form_dumps(),field_id=self._id)
         msg = tbf.bot.edit_message_reply_markup(chat_id=call.message.chat.id,message_id=call.message.message_id,reply_markup=new_keyboard)
         return msg
