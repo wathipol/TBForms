@@ -8,7 +8,7 @@ from collections import namedtuple
 import pickle
 import types as build_in_types
 
-
+__version__ = "0.9.2"
 
 class EventCollector:
     _submit_collector = {}
@@ -289,6 +289,7 @@ class TelebotForms:
         form.last_msg_id = msg.message_id
         self.fsm.set_state(int(user_id),idle_state,life_time = settings["LIFE_TIME"],form=form._form_dumps())
         return msg
+
 
     def callback_events(self,call):
         form_status = self.fsm.check_already_form(int(call.from_user.id))
