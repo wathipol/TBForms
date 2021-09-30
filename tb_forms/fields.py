@@ -282,7 +282,7 @@ class ChooseField(Field):
             if self._offset == 0:
                 iter_list = self.answer_list[:self.pagination_after]
             else:
-                iter_list = self.answer_list[(self._offset * self.pagination_after):]
+                iter_list = self.answer_list[(self._offset * self.pagination_after):][:self.pagination_after]
         for i in iter_list:
             v_id = self._append_variable_data(i)
             s_icon = ""

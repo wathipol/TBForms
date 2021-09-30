@@ -8,7 +8,7 @@ from collections import namedtuple
 import pickle
 import types as build_in_types
 
-__version__ = "0.9.2"
+__version__ = "0.9.3"
 
 class EventCollector:
     _submit_collector = {}
@@ -284,7 +284,6 @@ class TelebotForms:
         parse_mode = None
         if form.form_title:
             parse_mode = "Markdown"
-        self.bot.send_message(user_id,text)
         msg = self.bot.send_message(user_id,text,reply_markup=keyboard,parse_mode=parse_mode,disable_web_page_preview=True)
         form.last_msg_id = msg.message_id
         self.fsm.set_state(int(user_id),idle_state,life_time = settings["LIFE_TIME"],form=form._form_dumps())
