@@ -397,13 +397,15 @@ class TelebotForms:
         if field.value_from_callback_manual_mode:
             field.manualy_handle_callback(self,call,form)
             return
-        new_value_id = call.data.split(":")[2]
-        new_value = field.get_variable_data(new_value_id)
-        field.value = field.format_return_value(new_value)
-        self.bot.delete_message(call.message.chat.id,call.message.message_id)
+        else:
+            new_value_id = call.data.split(":")[2]
+            new_value = field.get_variable_data(new_value_id)
+            field.value = field.format_return_value(new_value)
+            self.bot.delete_message(call.message.chat.id,call.message.message_id)
         event = FormEvent("field_input",sub_event_type="callback",event_data=field)
         form.event_listener(event,form.create_update_form_object(action="event_callback"))
-        msg = self.send_form(call.from_user.id,form,need_init=False)
+        if not field.value_from_callback_manual_mode:
+            msg = self.send_form(call.from_user.id,form,need_init=False)
 
 
     def stop_freeze_event(self,message):
