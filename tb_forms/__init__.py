@@ -8,7 +8,7 @@ from collections import namedtuple
 import pickle
 import types as build_in_types
 
-__version__ = "0.9.4"
+__version__ = "0.9.5"
 
 class EventCollector:
     _submit_collector = {}
