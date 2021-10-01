@@ -396,7 +396,6 @@ class TelebotForms:
         field = form.get_field_by_id(f_id)
         if field.value_from_callback_manual_mode:
             field.manualy_handle_callback(self,call,form)
-            return
         else:
             new_value_id = call.data.split(":")[2]
             new_value = field.get_variable_data(new_value_id)
