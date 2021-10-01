@@ -3,6 +3,7 @@ from . import fields
 from . import tb_fsm as ffsm
 from .validators import all_content_types
 from . import validators
+from .tbf_types import FormEvent
 from .tb_fsm import TB_FORM_TAG,DEFAULT_CANCEl_CALLBACK,FIELD_CLICK_CALLBACK_DATA_PATTERN,FSM_FORM_IDE,DEFAULT_SUBMIT_CALLBACK,FSM_GET_FIELD_VALUE,DEFAULT_CANCEl_FORM_CALLBACK,DEFAULT_VALUE_FROM_CALLBACK_PATTERN
 from collections import namedtuple
 import pickle
@@ -32,16 +33,6 @@ class EventCollector:
         if name in list(self._cancel_collector.keys()):
             return self._cancel_collector[name]
         return False
-
-
-class FormEvent:
-    def __init__(self,event_type: str,sub_event_type = None,event_data = None):
-        self.event_type = event_type
-        self.sub_event_type = sub_event_type
-        self.event_data = event_data
-
-    def __repr__(self):
-        return "<FormEvent(event_type='{}',sub_event_type='{}',event_data={})>".format(self.event_type,self.sub_event_type,self.event_data)
 
 
 
@@ -396,15 +387,14 @@ class TelebotForms:
         field = form.get_field_by_id(f_id)
         if field.value_from_callback_manual_mode:
             field.manualy_handle_callback(self,call,form)
-        else:
-            new_value_id = call.data.split(":")[2]
-            new_value = field.get_variable_data(new_value_id)
-            field.value = field.format_return_value(new_value)
-            self.bot.delete_message(call.message.chat.id,call.message.message_id)
+            return
+        new_value_id = call.data.split(":")[2]
+        new_value = field.get_variable_data(new_value_id)
+        field.value = field.format_return_value(new_value)
+        self.bot.delete_message(call.message.chat.id,call.message.message_id)
         event = FormEvent("field_input",sub_event_type="callback",event_data=field)
         form.event_listener(event,form.create_update_form_object(action="event_callback"))
-        if not field.value_from_callback_manual_mode:
-            msg = self.send_form(call.from_user.id,form,need_init=False)
+        msg = self.send_form(call.from_user.id,form,need_init=False)
 
 
     def stop_freeze_event(self,message):

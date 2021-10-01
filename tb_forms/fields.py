@@ -3,6 +3,7 @@ import string
 import dill
 from . import validators as fvalidators
 from .validators import all_content_types,Validator
+from .tbf_types import FormEvent
 from telebot import types
 from .tb_fsm import TB_FORM_TAG,DEFAULT_CANCEl_CALLBACK,FIELD_CLICK_CALLBACK_DATA_PATTERN,DEFAULT_VALUE_FROM_CALLBACK_PATTERN,FSM_GET_FIELD_VALUE
 
@@ -320,6 +321,8 @@ class ChooseField(Field):
             new_value = self.get_variable_data(new_value_id)
             if not self.multiple:
                 self.value = self.format_return_value(new_value)
+                event = FormEvent("field_input",sub_event_type="callback",event_data=self)
+                form.event_listener(event,form.create_update_form_object(action="event_callback"))
                 tbf.bot.delete_message(call.message.chat.id,call.message.message_id)
                 return tbf.send_form(call.from_user.id,form,need_init=False)
             if self.value == None:
