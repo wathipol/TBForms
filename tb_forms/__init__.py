@@ -9,7 +9,7 @@ from collections import namedtuple
 import pickle
 import types as build_in_types
 
-__version__ = "0.9.6"
+__version__ = "0.9.7"
 
 class EventCollector:
     _submit_collector = {}
@@ -401,8 +401,20 @@ class TelebotForms:
         state_data = self.fsm.get_state(int(message.from_user.id))
         form = BaseForm.form_loads(state_data.args.form)
         settings = self._get_form_settings(form,prepare_update=message.chat.id)
+        need_msg_id = form.last_msg_id
         if settings["FREEZE_MODE"]:
-            self.bot.send_message(message.chat.id,settings["STOP_FREEZE_TEXT"],reply_to_message_id=form.last_msg_id)
+            if not need_msg_id:
+                print(2)
+                msg = self.send_form(message.chat.id,form,need_init=False)
+                need_msg_id = msg.message_id
+            if (message.message_id - need_msg_id) > 4:
+                msg = self.send_form(message.chat.id,form,need_init=False)
+                need_msg_id = msg.message_id
+            try:
+                self.bot.send_message(message.chat.id,settings["STOP_FREEZE_TEXT"],reply_to_message_id=need_msg_id)
+            except:
+                msg = self.send_form(message.chat.id,form,need_init=False)
+                self.bot.reply_to(msg,settings["STOP_FREEZE_TEXT"])
 
 
 class BaseForm:
