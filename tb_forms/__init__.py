@@ -9,7 +9,7 @@ from collections import namedtuple
 import pickle
 import types as build_in_types
 
-__version__ = "0.9.7"
+__version__ = "0.9.8"
 
 class EventCollector:
     _submit_collector = {}
@@ -50,6 +50,7 @@ class TelebotForms:
     GLOBAL_STOP_FREEZE_TEXT = None
     GLOBAL_LIFE_TIME = None
     GLOBAL_INVALID_INPUT_TEXT = None
+    GLOBAL_FORM_IMG = None
 
 
     def __init__(self,bot,fsm=None):
@@ -237,6 +238,11 @@ class TelebotForms:
             settings["INVALID_INPUT_TEXT"] = self.GLOBAL_INVALID_INPUT_TEXT
         else:
             settings["INVALID_INPUT_TEXT"] = form.default_input_not_valid
+        if form.FORM_IMG:
+            settings["FORM_IMG"] = form.FORM_IMG
+        else:
+            settings["FORM_IMG"] = self.GLOBAL_FORM_IMG
+
         if prepare_update:
             for prepere_keyname in prepere_list:
                 if isinstance(settings[prepere_keyname], build_in_types.FunctionType):
@@ -275,7 +281,10 @@ class TelebotForms:
         parse_mode = None
         if form.form_title:
             parse_mode = "Markdown"
-        msg = self.bot.send_message(user_id,text,reply_markup=keyboard,parse_mode=parse_mode,disable_web_page_preview=True)
+        if not settings["FORM_IMG"]:
+            msg = self.bot.send_message(user_id,text,reply_markup=keyboard,parse_mode=parse_mode,disable_web_page_preview=True)
+        else:
+            msg = self.bot.send_photo(user_id,settings["FORM_IMG"],caption=text,reply_markup=keyboard,parse_mode=parse_mode)
         form.last_msg_id = msg.message_id
         self.fsm.set_state(int(user_id),idle_state,life_time = settings["LIFE_TIME"],form=form._form_dumps())
         return msg
@@ -401,20 +410,8 @@ class TelebotForms:
         state_data = self.fsm.get_state(int(message.from_user.id))
         form = BaseForm.form_loads(state_data.args.form)
         settings = self._get_form_settings(form,prepare_update=message.chat.id)
-        need_msg_id = form.last_msg_id
         if settings["FREEZE_MODE"]:
-            if not need_msg_id:
-                print(2)
-                msg = self.send_form(message.chat.id,form,need_init=False)
-                need_msg_id = msg.message_id
-            if (message.message_id - need_msg_id) > 4:
-                msg = self.send_form(message.chat.id,form,need_init=False)
-                need_msg_id = msg.message_id
-            try:
-                self.bot.send_message(message.chat.id,settings["STOP_FREEZE_TEXT"],reply_to_message_id=need_msg_id)
-            except:
-                msg = self.send_form(message.chat.id,form,need_init=False)
-                self.bot.reply_to(msg,settings["STOP_FREEZE_TEXT"])
+            self.bot.send_message(message.chat.id,settings["STOP_FREEZE_TEXT"],reply_to_message_id=form.last_msg_id)
 
 
 class BaseForm:
@@ -426,6 +423,7 @@ class BaseForm:
     MISSING_VALUE_ICON = "💢"
     READ_ONLY_ICON = '🔒'
     EDIT_ICON = '✏️'
+    FORM_IMG  = None
     update_name = None
     custom_button = None
 
