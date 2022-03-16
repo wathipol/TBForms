@@ -9,7 +9,7 @@ from collections import namedtuple
 import pickle
 import types as build_in_types
 
-__version__ = "0.9.8"
+__version__ = "0.9.9"
 
 class EventCollector:
     _submit_collector = {}
@@ -79,8 +79,9 @@ class TelebotForms:
 
             form = BaseForm.form_loads(fsm_data.args.form)
             settings = self._get_form_settings(form,prepare_update=user_id)
-            if fsm_data.args.from_callback and settings["FREEZE_MODE"]:
-                return True
+            if hasattr(fsm_data.args, 'from_callback'):
+                if fsm_data.args.from_callback and settings["FREEZE_MODE"]:
+                    return True
             return False
 
 
@@ -311,6 +312,7 @@ class TelebotForms:
         cancel_key = types.InlineKeyboardButton(text=settings["CANCEL_BUTTON_TEXT"], callback_data=settings["CANCEL_CALLBACK"])
         if not field.without_system_key:
             keyboard.add(cancel_key)
+        field.before_input_update(self,form,call)
         self.bot.delete_message(call.message.chat.id,call.message.message_id)
         msg = self.bot.send_message(call.from_user.id,text,reply_markup=keyboard)
         form.last_msg_id = msg.message_id
@@ -370,6 +372,11 @@ class TelebotForms:
         settings = self._get_form_settings(form,prepare_update=message.chat.id)
         f_id = state_data.args.field_id
         field = form.get_field_by_id(f_id)
+
+        if field.value_from_message_manual_mode:
+            field.manualy_handle_message(self,message,form)
+            return
+        field.after_input_update(self,form,message)
         new_value = message.text
         valid = True
         if not field.validate(message):
@@ -389,6 +396,7 @@ class TelebotForms:
                 error_text = form.form_global_error_message
             self.bot.reply_to(message,error_text)
 
+    
     def callback_mode_input(self,call):
         state_data = self.fsm.get_state(int(call.from_user.id))
         form = BaseForm.form_loads(state_data.args.form)
@@ -397,6 +405,7 @@ class TelebotForms:
         if field.value_from_callback_manual_mode:
             field.manualy_handle_callback(self,call,form)
             return
+        field.after_input_update(self,form,call)
         new_value_id = call.data.split(":")[2]
         new_value = field.get_variable_data(new_value_id)
         field.value = field.format_return_value(new_value)

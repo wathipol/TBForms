@@ -5,7 +5,14 @@ from . import validators as fvalidators
 from .validators import all_content_types,Validator
 from .tbf_types import FormEvent
 from telebot import types
-from .tb_fsm import TB_FORM_TAG,DEFAULT_CANCEl_CALLBACK,FIELD_CLICK_CALLBACK_DATA_PATTERN,DEFAULT_VALUE_FROM_CALLBACK_PATTERN,FSM_GET_FIELD_VALUE
+from .tb_fsm import (
+    TB_FORM_TAG,DEFAULT_CANCEl_CALLBACK,
+    FIELD_CLICK_CALLBACK_DATA_PATTERN,
+    DEFAULT_VALUE_FROM_CALLBACK_PATTERN,
+    FSM_GET_FIELD_VALUE,
+    FSM_FORM_IDE
+)
+
 
 def split_list(arr, wanted_parts=1):
     """Разбить список на подсписки"""
@@ -20,8 +27,8 @@ def split_list(arr, wanted_parts=1):
 
 
 def islambda(v):
-  LAMBDA = lambda:0
-  return isinstance(v, type(LAMBDA)) and v.__name__ == LAMBDA.__name__
+    LAMBDA = lambda:0
+    return isinstance(v, type(LAMBDA)) and v.__name__ == LAMBDA.__name__
 
 
 class DillPickle:
@@ -65,6 +72,7 @@ class Field:
         self._id = Field._generate_id(self._id_len)
         self.value_from_callback = value_from_callback
         self.value_from_callback_manual_mode = False
+        self.value_from_message_manual_mode = False
         self.without_system_key = False
         self.value = default_value
         self.variable_data = {}
@@ -98,6 +106,12 @@ class Field:
                     return False
         return True
 
+    def before_input_update(self,tbf,form,update):
+        pass
+
+    def after_input_update(self,tbf,form,update):
+        pass
+
     def field_validator(self,upd):
         return True
 
@@ -111,6 +125,9 @@ class Field:
             return self.variable_data[v_id]
 
     def manualy_handle_callback(self,tbf,call,form):
+        pass
+
+    def manualy_handle_message(self,tbf,message,form):
         pass
 
 
@@ -348,3 +365,76 @@ class ChooseField(Field):
         if self.multiple:
             return ",".join(self.value)
         return str(self.value)
+
+
+
+
+class ListField(Field):
+    def __init__(self,title=None,input_text=None,save_button_text="Save({}) 💾",validators=[],required=True,read_only=False,error_message=None,min_len=1,max_len=None,default_value=None,field_hidden_data=None):
+        all_validators = []
+        for validator in validators:
+            all_validators.append(validator)
+        super().__init__(title=title,input_text=input_text,validators=all_validators,required=required,read_only=read_only,error_message=error_message,default_value=default_value,field_hidden_data=field_hidden_data)
+        self.save_button_text = save_button_text        
+        self.value_from_message_manual_mode = True
+        self.value_from_callback_manual_mode = True
+        self.min_len = min_len
+        self.max_len = max_len
+
+
+    def format_return_value(self,upd):
+        return upd.text
+
+    def before_input_update(self,tbf,form,update):
+        self.value = None
+
+
+    def manualy_handle_callback(self,tbf,call,form):
+        new_value_id = call.data.split(":")[2]
+        settings = tbf._get_form_settings(form,prepare_update=call.from_user.id)
+        
+        if str(new_value_id) == "save_field":
+            event = FormEvent("field_input",sub_event_type="msg",event_data=self)
+            form.event_listener(event,form.create_update_form_object(action="event_callback"))
+            return tbf.send_form(call.message.chat.id,form,need_init=False)
+        
+        elif str(new_value_id) == "cancel_field":
+            self.value = None
+            idle_state = "{}:{}".format(FSM_FORM_IDE,form._form_id)
+            tbf.fsm.set_state(int(call.from_user.id),idle_state,form=form._form_dumps())
+            tbf.bot.delete_message(call.message.chat.id,call.message.message_id)
+            return tbf.send_form(call.from_user.id,form,need_init=False)
+
+    def manualy_handle_message(self,tbf,message,form):
+        new_value = message.text
+        settings = tbf._get_form_settings(form,prepare_update=message.chat.id)
+        valid = True
+        if not self.validate(message):
+            valid = False
+        else:
+            if not self.value or not isinstance(self.value,list):
+                self.value = []
+            self.value.append(self.format_return_value(message))
+            if not (self.max_len and len(self.value) == self.max_len):
+                new_keyboard =  keyboard = types.InlineKeyboardMarkup()
+                if len(self.value) >= self.min_len:
+                    new_keyboard.row(types.InlineKeyboardButton(text=str(self.save_button_text).format(len(self.value)), callback_data=DEFAULT_VALUE_FROM_CALLBACK_PATTERN.format("save_field"))) 
+                else:
+                    new_keyboard.row(types.InlineKeyboardButton(text=settings["CANCEL_BUTTON_TEXT"], callback_data=DEFAULT_VALUE_FROM_CALLBACK_PATTERN.format("cancel_field"))) 
+                tbf.fsm.set_state(message.from_user.id,FSM_GET_FIELD_VALUE, form=form._form_dumps(),field_id=self._id)
+                msg = tbf.bot.send_message(message.chat.id,self.input_text,reply_markup=new_keyboard)
+                return msg
+        event = FormEvent("field_input",sub_event_type="msg",event_data=self)
+        if not valid:
+            event.event_type = "field_input_invalid"
+        form.event_listener(event,form.create_update_form_object(action="event_callback"))
+        msg = tbf.send_form(message.from_user.id,form,need_init=False)
+        if not valid:
+            error_text = settings["INVALID_INPUT_TEXT"]
+            if field.error_message:
+                error_text = field.error_message
+            elif form.form_global_error_message:
+                error_text = form.form_global_error_message
+            self.bot.reply_to(message,error_text)
+
+
