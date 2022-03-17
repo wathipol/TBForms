@@ -265,7 +265,7 @@ class TelebotForms:
             k_text = ""
             if f["replace_icon"]:
                 k_text += f["replace_icon"]
-            elif f["value"]:
+            elif f["value"] != None:
                 k_text += settings["EDIT_ICON"]
             else:
                 k_text += settings["MISSING_VALUE_ICON"]
