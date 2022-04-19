@@ -4,12 +4,21 @@ from . import tb_fsm as ffsm
 from .validators import all_content_types
 from . import validators
 from .tbf_types import FormEvent
-from .tb_fsm import TB_FORM_TAG,DEFAULT_CANCEl_CALLBACK,FIELD_CLICK_CALLBACK_DATA_PATTERN,FSM_FORM_IDE,DEFAULT_SUBMIT_CALLBACK,FSM_GET_FIELD_VALUE,DEFAULT_CANCEl_FORM_CALLBACK,DEFAULT_VALUE_FROM_CALLBACK_PATTERN
+from .tb_fsm import (
+    TB_FORM_TAG,
+    DEFAULT_CANCEl_CALLBACK,
+    FIELD_CLICK_CALLBACK_DATA_PATTERN,
+    FSM_FORM_IDE,
+    DEFAULT_SUBMIT_CALLBACK,
+    FSM_GET_FIELD_VALUE,
+    DEFAULT_CANCEl_FORM_CALLBACK,
+    DEFAULT_VALUE_FROM_CALLBACK_PATTERN)
 from collections import namedtuple
 import pickle
 import types as build_in_types
 
-__version__ = "0.9.9"
+__version__ = "0.9.11"
+
 
 class EventCollector:
     _submit_collector = {}
@@ -17,23 +26,21 @@ class EventCollector:
     _global_cancel = None
     _global_submit = None
 
-    def register_submit(self,name,func):
+    def register_submit(self, name, func):
         self._submit_collector[name] = func
 
-    def register_cancel(self,name,func):
+    def register_cancel(self, name, func):
         self._cancel_collector[name] = func
 
-
-    def get_submit(self,name):
+    def get_submit(self, name):
         if name in list(self._submit_collector.keys()):
             return self._submit_collector[name]
         return False
 
-    def get_cancel(self,name):
+    def get_cancel(self, name):
         if name in list(self._cancel_collector.keys()):
             return self._cancel_collector[name]
         return False
-
 
 
 class TelebotForms:
@@ -52,8 +59,7 @@ class TelebotForms:
     GLOBAL_INVALID_INPUT_TEXT = None
     GLOBAL_FORM_IMG = None
 
-
-    def __init__(self,bot,fsm=None):
+    def __init__(self, bot, fsm=None):
         self.bot = bot
         self._events_collector = EventCollector()
         if not fsm:
@@ -61,13 +67,12 @@ class TelebotForms:
         else:
             self.fsm = fsm
 
-
         # Запрет на сообщения до закрытия формы (Статичное)
         @bot.message_handler(func=lambda message: True and self.fsm.check_already_form(message.chat.id))
         def cath_stop_freeze_events_on_idle(message):
             self.stop_freeze_event(message)
 
-        def __check_already_input_only_from_callback_mode(user_id,from_idle=False):
+        def __check_already_input_only_from_callback_mode(user_id, from_idle=False):
             """ Валидация только евентов допустимых к заморозке """
             fsm_data = self.fsm.get_state(user_id)
             if from_idle:
@@ -78,53 +83,60 @@ class TelebotForms:
                     return False
 
             form = BaseForm.form_loads(fsm_data.args.form)
-            settings = self._get_form_settings(form,prepare_update=user_id)
+            settings = self._get_form_settings(form, prepare_update=user_id)
             if hasattr(fsm_data.args, 'from_callback'):
                 if fsm_data.args.from_callback and settings["FREEZE_MODE"]:
                     return True
             return False
 
-
         # Запрет на сообщения до закрытия формы (Запрос значений)
-        @bot.message_handler(func=lambda message: True and __check_already_input_only_from_callback_mode(message.chat.id))
+        @bot.message_handler(
+            func=lambda message: True and __check_already_input_only_from_callback_mode(message.chat.id))
         def cath_stop_freeze_events_on_from_callback_getting(message):
             self.stop_freeze_event(message)
 
         # Редактировать поле
-        @self.bot.callback_query_handler(func=lambda call: True and (str(":".join(call.data.split(":")[0:2])) + ":{}") == FIELD_CLICK_CALLBACK_DATA_PATTERN)
+        @self.bot.callback_query_handler(
+            func=lambda call: True and (
+                str(":".join(call.data.split(":")[0:2])) + ":{}") == FIELD_CLICK_CALLBACK_DATA_PATTERN)
         def cath_edit_callback_events(call):
             self.callback_events(call)
 
         # Отправка формы
-        @self.bot.callback_query_handler(func=lambda call: True and (str(":".join(call.data.split(":")[0:2]))) == DEFAULT_SUBMIT_CALLBACK)
+        @self.bot.callback_query_handler(
+            func=lambda call: True and (
+                str(":".join(call.data.split(":")[0:2]))) == DEFAULT_SUBMIT_CALLBACK)
         def cath_submit_callback_events(call):
             self.submit_form(call)
 
-
         # Стандартная отмена ввода
-        @self.bot.callback_query_handler(func=lambda call: True and call.data == DEFAULT_CANCEl_CALLBACK)
+        @self.bot.callback_query_handler(
+            func=lambda call: True and call.data == DEFAULT_CANCEl_CALLBACK)
         def cath_deffault_cancel_callback_events(call):
             self.deffault_cancel_input(call)
 
         # Стандартное закрытие формы
-        @self.bot.callback_query_handler(func=lambda call: True and call.data == DEFAULT_CANCEl_FORM_CALLBACK)
+        @self.bot.callback_query_handler(
+            func=lambda call: True and call.data == DEFAULT_CANCEl_FORM_CALLBACK)
         def cath_deffault_close_form_callback_events(call):
             self.deffault_close_form(call)
 
-
         # Получить данные для поля (FROM_CALLBACK)
-        @self.bot.callback_query_handler(func=lambda call: True and self.fsm.check_input_status(call.from_user.id) and (str(":".join(call.data.split(":")[0:2])) + ":{}") == DEFAULT_VALUE_FROM_CALLBACK_PATTERN,)
+        @self.bot.callback_query_handler(
+            func=lambda call: True and self.fsm.check_input_status(call.from_user.id) and (
+                str(":".join(call.data.split(":")[0:2])) + ":{}") == DEFAULT_VALUE_FROM_CALLBACK_PATTERN,
+        )
         def cath_callback_mode_input_events(call):
             self.callback_mode_input(call)
 
         # Получить данные для поля (FROM MESSAGE)
-        @bot.message_handler(func=lambda message: True and self.fsm.check_input_status(message.from_user.id),content_types=all_content_types )
+        @bot.message_handler(
+            func=lambda message: True and self.fsm.check_input_status(
+                message.from_user.id), content_types=all_content_types)
         def cath_msg_mode_input_events(message):
             self.msg_mode_input(message)
 
-
-
-    def set_global(self,edit=False,read_only=False,missing_value=False):
+    def set_global(self, edit=False, read_only=False, missing_value=False):
         if edit:
             self.GLOBAL_EDIT_ICON = edit
         if read_only:
@@ -132,25 +144,25 @@ class TelebotForms:
         if missing_value:
             self.GLOBAL_MISSING_VALUE_ICON = missing_value
 
-    def form_submit_event(self,name):
+    def form_submit_event(self, name):
         """ Декоратор обновлений отправки формы """
         def pre_decoration(in_func):
-            self._events_collector.register_submit(name,in_func)
+            self._events_collector.register_submit(name, in_func)
         return pre_decoration
 
-    def form_cancel_event(self,name):
+    def form_cancel_event(self, name):
         """ Декоратор обновления закрытия формы """
         def pre_decoration(in_func):
-            self._events_collector.register_cancel(name,in_func)
+            self._events_collector.register_cancel(name, in_func)
         return pre_decoration
 
-    def form_event(self,name: str, action: list):
+    def form_event(self, name: str, action: list):
         """ Общий декоратор обновления формы """
         def pre_decoration(in_func):
             if "submit" in action:
-                self._events_collector.register_submit(name,in_func)
+                self._events_collector.register_submit(name, in_func)
             if "cancel":
-                self._events_collector.register_cancel(name,in_func)
+                self._events_collector.register_cancel(name, in_func)
         return pre_decoration
 
     def global_submit(self):
@@ -165,15 +177,14 @@ class TelebotForms:
             self._events_collector._global_cancel = in_func
         return pre_decoration
 
-
-    def to_submit_form(self,name,upd,form):
+    def to_submit_form(self, name, upd, form):
         if self._events_collector._global_submit:
             func = self._events_collector._global_submit
         else:
             func = self._events_collector.get_submit(name)
-        func(upd,form)
+        func(upd, form)
 
-    def to_cancel_form(self,name,upd,form):
+    def to_cancel_form(self, name, upd, form):
         func = self._events_collector.get_cancel(name)
         if not func:
             if self._events_collector._global_cancel:
@@ -181,9 +192,12 @@ class TelebotForms:
             else:
                 # Евент не определён....
                 return
-        func(upd,form)
+        func(upd, form)
 
-    def _get_form_settings(self,form,prepare_update=False,prepere_list = ["CANCEL_BUTTON_TEXT","STOP_FREEZE_TEXT","INVALID_INPUT_TEXT"]):
+    def _get_form_settings(
+            self, form,
+            prepare_update=False,
+            prepere_list=["CANCEL_BUTTON_TEXT", "STOP_FREEZE_TEXT", "INVALID_INPUT_TEXT"]):
         settings = {}
         if self.GLOBAL_EDIT_ICON:
             settings["EDIT_ICON"] = self.GLOBAL_EDIT_ICON
@@ -251,21 +265,20 @@ class TelebotForms:
 
         return settings
 
-
-    def send_form(self,user_id: int,form,need_init=True):
+    def send_form(self, user_id: int, form, need_init=True):
         if need_init:
             form.init_form()
-        if not isinstance(form,BaseForm):
+        if not isinstance(form, BaseForm):
             raise Expetion("form must be like BaseForm")
         keyboard = types.InlineKeyboardMarkup()
         fields_markup = form.get_fields()
         text = form.get_form_text()
-        settings = self._get_form_settings(form,prepare_update=user_id)
+        settings = self._get_form_settings(form, prepare_update=user_id)
         for f in fields_markup:
             k_text = ""
             if f["replace_icon"]:
                 k_text += f["replace_icon"]
-            elif f["value"] != None:
+            elif f["value"] is not None:
                 k_text += settings["EDIT_ICON"]
             else:
                 k_text += settings["MISSING_VALUE_ICON"]
@@ -273,25 +286,32 @@ class TelebotForms:
             key = types.InlineKeyboardButton(text=k_text, callback_data=f["callback_data"])
             keyboard.add(key)
         if form.is_ready_to_submit():
-            submit_key = types.InlineKeyboardButton(text=settings["SUBMIT_BUTTON_TEXT"], callback_data=DEFAULT_SUBMIT_CALLBACK)
+            submit_key = types.InlineKeyboardButton(
+                text=settings["SUBMIT_BUTTON_TEXT"], callback_data=DEFAULT_SUBMIT_CALLBACK)
             keyboard.add(submit_key)
         if settings["CLOSE_FORM_BUT"]:
-            cancel_key = types.InlineKeyboardButton(text=settings["CANCEL_BUTTON_TEXT"], callback_data=DEFAULT_CANCEl_FORM_CALLBACK)
+            cancel_key = types.InlineKeyboardButton(
+                text=settings["CANCEL_BUTTON_TEXT"], callback_data=DEFAULT_CANCEl_FORM_CALLBACK)
             keyboard.add(cancel_key)
-        idle_state = "{}:{}".format(FSM_FORM_IDE,form._form_id)
+        idle_state = "{}:{}".format(FSM_FORM_IDE, form._form_id)
         parse_mode = None
         if form.form_title:
-            parse_mode = "Markdown"
+            parse_mode = "HTML"
         if not settings["FORM_IMG"]:
-            msg = self.bot.send_message(user_id,text,reply_markup=keyboard,parse_mode=parse_mode,disable_web_page_preview=True)
+            msg = self.bot.send_message(
+                user_id, text,
+                reply_markup=keyboard, parse_mode=parse_mode, disable_web_page_preview=True)
         else:
-            msg = self.bot.send_photo(user_id,settings["FORM_IMG"],caption=text,reply_markup=keyboard,parse_mode=parse_mode)
+            msg = self.bot.send_photo(
+                user_id, settings["FORM_IMG"],
+                caption=text, reply_markup=keyboard, parse_mode=parse_mode)
         form.last_msg_id = msg.message_id
-        self.fsm.set_state(int(user_id),idle_state,life_time = settings["LIFE_TIME"],form=form._form_dumps())
+        self.fsm.set_state(
+            int(user_id), idle_state,
+            life_time=settings["LIFE_TIME"], form=form._form_dumps())
         return msg
 
-
-    def callback_events(self,call):
+    def callback_events(self, call):
         form_status = self.fsm.check_already_form(int(call.from_user.id))
         if not form_status:
             return
@@ -303,22 +323,25 @@ class TelebotForms:
         field = form.get_field_by_id(f_id)
         if not form or not field:
             return
-        settings = self._get_form_settings(form,prepare_update=call.message.chat.id)
+        settings = self._get_form_settings(form, prepare_update=call.message.chat.id)
         text = field.input_text
         if field.value_from_callback:
             keyboard = field.create_variables_keys()
         else:
             keyboard = types.InlineKeyboardMarkup()
-        cancel_key = types.InlineKeyboardButton(text=settings["CANCEL_BUTTON_TEXT"], callback_data=settings["CANCEL_CALLBACK"])
+        cancel_key = types.InlineKeyboardButton(
+            text=settings["CANCEL_BUTTON_TEXT"], callback_data=settings["CANCEL_CALLBACK"])
         if not field.without_system_key:
             keyboard.add(cancel_key)
-        field.before_input_update(self,form,call)
-        self.bot.delete_message(call.message.chat.id,call.message.message_id)
-        msg = self.bot.send_message(call.from_user.id,text,reply_markup=keyboard)
+        field.before_input_update(self, form, call)
+        self.bot.delete_message(call.message.chat.id, call.message.message_id)
+        msg = self.bot.send_message(call.from_user.id, text, reply_markup=keyboard)
         form.last_msg_id = msg.message_id
-        self.fsm.set_state(call.from_user.id,FSM_GET_FIELD_VALUE,form=form._form_dumps(),field_id=field._id,from_callback=field.value_from_callback)
+        self.fsm.set_state(
+            call.from_user.id, FSM_GET_FIELD_VALUE,
+            form=form._form_dumps(), field_id=field._id, from_callback=field.value_from_callback)
 
-    def submit_form(self,call):
+    def submit_form(self, call):
         form_status = self.fsm.check_already_form(int(call.from_user.id))
         if not form_status:
             return
@@ -329,31 +352,30 @@ class TelebotForms:
         if state_data.state.split(":")[2] != form._form_id:
             return
         form_to_upd = form.create_update_form_object(action="submit")
-        form_valid_status = form.form_validator(call,form_to_upd)
+        form_valid_status = form.form_validator(call, form_to_upd)
         invalid_form_error = form.form_valid_error
-        if isinstance(form_valid_status,str):
+        if isinstance(form_valid_status, str):
             invalid_form_error = form_valid_status
-        if not form_valid_status or isinstance(form_valid_status,str):
-            self.bot.answer_callback_query(callback_query_id=call.id,show_alert=True,text=invalid_form_error)
+        if not form_valid_status or isinstance(form_valid_status, str):
+            self.bot.answer_callback_query(
+                callback_query_id=call.id, show_alert=True, text=invalid_form_error)
             return
-        self.bot.delete_message(call.message.chat.id,call.message.message_id)
+        self.bot.delete_message(call.message.chat.id, call.message.message_id)
         self.fsm.reset_state(call.message.chat.id)
-        self.to_submit_form(form.get_update_name(),call,form_to_upd)
+        self.to_submit_form(form.get_update_name(), call, form_to_upd)
 
-
-
-    def deffault_cancel_input(self,call):
+    def deffault_cancel_input(self, call):
         if not self.fsm.check_input_status(call.from_user.id):
             return
         state_data = self.fsm.get_state(int(call.from_user.id))
         form = BaseForm.form_loads(state_data.args.form)
-        settings = self._get_form_settings(form,prepare_update=call.message.chat.id)
-        idle_state = "{}:{}".format(FSM_FORM_IDE,form._form_id)
-        self.fsm.set_state(int(call.from_user.id),idle_state,form=form._form_dumps())
-        self.bot.delete_message(call.message.chat.id,call.message.message_id)
-        self.send_form(call.from_user.id,form,need_init=False)
+        settings = self._get_form_settings(form, prepare_update=call.message.chat.id)
+        idle_state = "{}:{}".format(FSM_FORM_IDE, form._form_id)
+        self.fsm.set_state(int(call.from_user.id), idle_state, form=form._form_dumps())
+        self.bot.delete_message(call.message.chat.id, call.message.message_id)
+        self.send_form(call.from_user.id, form, need_init=False)
 
-    def deffault_close_form(self,call):
+    def deffault_close_form(self, call):
         form_status = self.fsm.check_already_form(int(call.from_user.id))
         if not form_status:
             return
@@ -362,65 +384,64 @@ class TelebotForms:
         if state_data.state.split(":")[2] != form._form_id:
             return
         form_to_upd = form.create_update_form_object(action="cancel")
-        self.bot.delete_message(call.message.chat.id,call.message.message_id)
+        self.bot.delete_message(call.message.chat.id, call.message.message_id)
         self.fsm.reset_state(call.message.chat.id)
-        self.to_cancel_form(form.get_update_name(),call,form_to_upd)
+        self.to_cancel_form(form.get_update_name(), call, form_to_upd)
 
-    def msg_mode_input(self,message):
+    def msg_mode_input(self, message):
         state_data = self.fsm.get_state(int(message.from_user.id))
         form = BaseForm.form_loads(state_data.args.form)
-        settings = self._get_form_settings(form,prepare_update=message.chat.id)
+        settings = self._get_form_settings(form, prepare_update=message.chat.id)
         f_id = state_data.args.field_id
         field = form.get_field_by_id(f_id)
 
         if field.value_from_message_manual_mode:
-            field.manualy_handle_message(self,message,form)
+            field.manualy_handle_message(self, message, form)
             return
-        field.after_input_update(self,form,message)
+        field.after_input_update(self, form, message)
         new_value = message.text
         valid = True
         if not field.validate(message):
             valid = False
         else:
             field.value = field.format_return_value(message)
-        event = FormEvent("field_input",sub_event_type="msg",event_data=field)
+        event = FormEvent("field_input", sub_event_type="msg", event_data=field)
         if not valid:
             event.event_type = "field_input_invalid"
-        form.event_listener(event,form.create_update_form_object(action="event_callback"))
-        msg = self.send_form(message.from_user.id,form,need_init=False)
+        form.event_listener(event, form.create_update_form_object(action="event_callback"))
+        msg = self.send_form(message.from_user.id, form, need_init=False)
         if not valid:
             error_text = settings["INVALID_INPUT_TEXT"]
             if field.error_message:
                 error_text = field.error_message
             elif form.form_global_error_message:
                 error_text = form.form_global_error_message
-            self.bot.reply_to(message,error_text)
+            self.bot.reply_to(message, error_text)
 
-    
-    def callback_mode_input(self,call):
+    def callback_mode_input(self, call):
         state_data = self.fsm.get_state(int(call.from_user.id))
         form = BaseForm.form_loads(state_data.args.form)
         f_id = state_data.args.field_id
         field = form.get_field_by_id(f_id)
         if field.value_from_callback_manual_mode:
-            field.manualy_handle_callback(self,call,form)
+            field.manualy_handle_callback(self, call, form)
             return
-        field.after_input_update(self,form,call)
+        field.after_input_update(self, form, call)
         new_value_id = call.data.split(":")[2]
         new_value = field.get_variable_data(new_value_id)
         field.value = field.format_return_value(new_value)
-        self.bot.delete_message(call.message.chat.id,call.message.message_id)
-        event = FormEvent("field_input",sub_event_type="callback",event_data=field)
-        form.event_listener(event,form.create_update_form_object(action="event_callback"))
-        msg = self.send_form(call.from_user.id,form,need_init=False)
+        self.bot.delete_message(call.message.chat.id, call.message.message_id)
+        event = FormEvent("field_input", sub_event_type="callback", event_data=field)
+        form.event_listener(event, form.create_update_form_object(action="event_callback"))
+        msg = self.send_form(call.from_user.id, form, need_init=False)
 
-
-    def stop_freeze_event(self,message):
+    def stop_freeze_event(self, message):
         state_data = self.fsm.get_state(int(message.from_user.id))
         form = BaseForm.form_loads(state_data.args.form)
-        settings = self._get_form_settings(form,prepare_update=message.chat.id)
+        settings = self._get_form_settings(form, prepare_update=message.chat.id)
         if settings["FREEZE_MODE"]:
-            self.bot.send_message(message.chat.id,settings["STOP_FREEZE_TEXT"],reply_to_message_id=form.last_msg_id)
+            self.bot.send_message(
+                message.chat.id, settings["STOP_FREEZE_TEXT"], reply_to_message_id=form.last_msg_id)
 
 
 class BaseForm:
@@ -432,7 +453,7 @@ class BaseForm:
     MISSING_VALUE_ICON = "💢"
     READ_ONLY_ICON = '🔒'
     EDIT_ICON = '✏️'
-    FORM_IMG  = None
+    FORM_IMG = None
     update_name = None
     custom_button = None
 
@@ -462,7 +483,6 @@ class BaseForm:
     _answer = {}
     _form_hidden_list = []
 
-
     def __init__(self):
         pass
 
@@ -474,15 +494,15 @@ class BaseForm:
             self.all_field = {}
         self.last_msg_id = None
         for atr in iter_dict:
-            atr_data = getattr(self,atr)
-            if not isinstance(atr_data,fields.Field):
+            atr_data = getattr(self, atr)
+            if not isinstance(atr_data, fields.Field):
                 continue
             self.all_field[atr] = atr_data
         self._form_id = fields.Field._generate_id(6)
         self.form_data = self.form_hidden_data
         self.inited = True
 
-    def field_from_dict(self,new_fields):
+    def field_from_dict(self, new_fields):
         """ Добавить поля к форме из словаря """
         if not self.inited:
             self.all_field = {}
@@ -491,50 +511,49 @@ class BaseForm:
             self.all_field[f_name] = field
         self.pre_inited = True
 
-    def _get_all_field(self,to_dict=False):
+    def _get_all_field(self, to_dict=False):
         if to_dict:
             return self.all_field
         return list(self.all_field.values())
 
-    def form_validator(self,upd,form_data):
+    def form_validator(self, upd, form_data):
         return True
 
-    def event_listener(self,event,form_data):
+    def event_listener(self, event, form_data):
         return
 
-    def hide_field(self,name):
+    def hide_field(self, name):
         if name not in self._form_hidden_list:
             self._form_hidden_list.append(name)
 
-    def show_field(self,name):
+    def show_field(self, name):
         if name in self._form_hidden_list:
             ind = self._form_hidden_list.index(name)
             del self._form_hidden_list[ind]
 
-    def field_visable_status(self,name):
+    def field_visable_status(self, name):
         return bool(name in self._form_hidden_list)
-
 
     def get_fields(self):
         all_field = self._get_all_field(to_dict=True)
         markup = []
-        for f_name,f in all_field.items():
+        for f_name, f in all_field.items():
             if f_name in self._form_hidden_list:
                 continue
             key = f.create_key()
             markup.append(key)
         return markup
 
-    def get_field_by_id(self,f_id: str):
+    def get_field_by_id(self, f_id: str):
         all_field = self._get_all_field(to_dict=True)
-        for f_name,f in all_field.items():
+        for f_name, f in all_field.items():
             if f._id == f_id:
                 need_field = f
                 need_field.name_in_form = f_name
                 return need_field
         return False
 
-    def get_field_by_name(self,f_name: str):
+    def get_field_by_name(self, f_name: str):
         all_field = self._get_all_field(to_dict=True)
         for f in all_field:
             if f == f_name:
@@ -544,33 +563,33 @@ class BaseForm:
     def get_form_text(self):
         text = ""
         if self.form_title:
-            text = "*"+str(self.form_title)+"*" + "\n\n"
+            text = "<b>" + str(self.form_title) + "</b>" + "\n\n"
         all_field = self._get_all_field(to_dict=True)
-        for f_name,f in all_field.items():
+        for f_name, f in all_field.items():
             if f_name in self._form_hidden_list:
                 continue
             value_format = f.message_text_data_format()
-            if value_format == None:
+            if value_format is None:
                 value_format = ""
-            text += "{}: {}".format(f.title,value_format)
+            text += "{}: {}".format(f.title, value_format)
             if list(all_field.values())[-1] != f:
                 text += "\n"
         return text
 
     def is_ready_to_submit(self):
         all_field = self._get_all_field(to_dict=True)
-        for f_name,f in all_field.items():
+        for f_name, f in all_field.items():
             if f_name in self._form_hidden_list:
                 continue
-            if f.required and f.value == None:
+            if f.required and f.value is None:
                 return False
         return True
 
     def get_update_name(self):
         return self.update_name
 
-    def create_update_form_object(self,action=None):
-        all_fields =  self._get_all_field(to_dict=True)
+    def create_update_form_object(self, action=None):
+        all_fields = self._get_all_field(to_dict=True)
         out_map = {}
         for f in all_fields:
             out_map[f] = all_fields[f].value
@@ -581,7 +600,6 @@ class BaseForm:
 
     def _form_dumps(self):
         return pickle.dumps(self)
-
 
     @staticmethod
     def form_loads(dumps_data):
