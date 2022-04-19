@@ -44,32 +44,36 @@ Demo for [Example](#quickstart)
 
 ## Quickstart
 ```python
-from tb_forms import TelebotForms,BaseForm,fields
+from tb_forms import TelebotForms, BaseForm, fields
 from telebot import TeleBot
 
 bot = TeleBot("your_token")
 tbf = TelebotForms(bot)
 
+
 class TestRegisterForm(BaseForm):
     update_name = "submit_register_form"
     form_title = "TBF Test Register Form"
-    name = fields.StrField("Name","Enter your name:")
-    age = fields.NumberField("Age","Select your age:",only_int=True,key_mode=True)
-    sex = fields.ChooseField("Sex","Select your sex:",answer_list=["male","female"])
-    photo = fields.MediaField("Photo","Enter your photo:",valid_types=['photo'],required=False,error_message="Error. You can only send a photo")
+    name = fields.StrField("Name", "Enter your name:")
+    age = fields.NumberField("Age", "Select your age:", only_int=True, key_mode=True)
+    sex = fields.ChooseField("Sex", "Select your sex:", answer_list=["male", "female"])
+    photo = fields.MediaField(
+        "Photo", "Enter your photo:",
+        valid_types=['photo'], required=False, error_message="Error. You can only send a photo")
     freeze_mode = True
     close_form_but = False
     submit_button_text = "Register"
 
+
 @bot.message_handler(commands=['start'])
 def start_update(message):
-    tbf.send_form(message.chat.id,TestRegisterForm())
+    tbf.send_form(message.chat.id, TestRegisterForm())
+
 
 @tbf.form_submit_event("submit_register_form")
-def submit_register_update(call,form_data):
-    print(form_data) # Completed form data
-    bot.send_message(call.message.chat.id,"Successful registration")
-
+def submit_register_update(call, form_data):
+    print(form_data)  # Completed form data
+    bot.send_message(call.message.chat.id, "Successful registration")
 ```
 ## Docs
 
@@ -97,7 +101,6 @@ tbf.GLOBAL_EDIT_ICON: str = "✏️"
 tbf.GLOBAL_CANCEL_BUTTON_TEXT = "Cancel"
 # Callable example
 tbf.GLOBAL_CANCEL_BUTTON_TEXT = lambda user_id: "Cancel"
-
 
 
 # Global submit form button text
@@ -217,7 +220,7 @@ Telegram Media input field
 ##### NumberField
 Input int or float value
 ```python
--> Union[int,float]
+-> Union[int, float]
 ```
 | Args  | Required? |  Default  |  Type   | Description     |
 | ------------- | ------------- |------------- |------------- |------------- |
@@ -269,7 +272,7 @@ Form validation before submitting
 ##### How it works?
 You must override the function
 ```python
-def form_validator (self, call, form_data) -> Union[bool,str]
+def form_validator(self, call, form_data) -> Union[bool, str]
 ```
 The form will be submitted only if the function returns True, if the function returns Str, this will be the error text, and the default error will be used if the function returns False
 
@@ -278,15 +281,17 @@ The form will be submitted only if the function returns True, if the function re
 class TestRegisterForm(BaseForm):
     update_name = "submit_register_form"
     form_title = "TBF Test Register Form"
-    name = fields.StrField("Name","Enter your name:")
-    age = fields.NumberField("Age","Select your age:",only_int=True,key_mode=True)
-    sex = fields.ChooseField("Sex","Select your sex:",answer_list=["male","female"])
-    photo = fields.MediaField("Photo","Enter your photo:",valid_types=['photo'],required=False,error_message="Error. You can only send a photo")
+    name = fields.StrField("Name", "Enter your name:")
+    age = fields.NumberField("Age", "Select your age:", only_int=True, key_mode=True)
+    sex = fields.ChooseField("Sex", "Select your sex:", answer_list=["male", "female"])
+    photo = fields.MediaField(
+        "Photo", "Enter your photo:",
+        valid_types=['photo'], required=False, error_message="Error. You can only send a photo")
     freeze_mode = True
     close_form_but = False
     submit_button_text = "Register"
 
-    def form_validator(self,call,form_data):
+    def form_validator(self, call, form_data):
         if form_data.age < 18:
             return "You must be at least 18 years old to use the bot"
         return True
@@ -303,16 +308,19 @@ class TestRegisterForm(BaseForm):
 class TestRegisterForm(BaseForm):
     update_name = "submit_register_form"
     form_title = "TBF Test Register Form"
-    name = fields.StrField("Name","Enter your name:")
-    age = fields.NumberField("Age","Select your age:",only_int=True,key_mode=True)
-    sex = fields.ChooseField("Sex","Select your sex:",answer_list=["male","female"])
-    photo = fields.MediaField("Photo","Enter your photo:",valid_types=['photo'],required=False,error_message="Error. You can only send a photo")
+    name = fields.StrField("Name", "Enter your name:")
+    age = fields.NumberField("Age", "Select your age:", only_int=True, key_mode=True)
+    sex = fields.ChooseField("Sex", "Select your sex:", answer_list=["male", "female"])
+    photo = fields.MediaField(
+        "Photo", "Enter your photo:",
+        valid_types=['photo'], required=False, error_message="Error. You can only send a photo")
     freeze_mode = True
     close_form_but = False
     submit_button_text = "Register"
 
+
 form = TestRegisterForm()
-new_field = {"terms":fields.BooleanField("Terms of use","Accept terms of use:")}
+new_field = {"terms": fields.BooleanField("Terms of use", "Accept terms of use:")}
 form.field_from_dict(new_field)
 ```
 
@@ -322,14 +330,17 @@ form.field_from_dict(new_field)
 class TestRegisterForm(BaseForm):
     update_name = "submit_register_form"
     form_title = "TBF Test Register Form"
-    name = fields.StrField("Name","Enter your name:")
-    age = fields.NumberField("Age","Select your age:",only_int=True,key_mode=True)
-    sex = fields.ChooseField("Sex","Select your sex:",answer_list=["male","female"])
-    photo = fields.MediaField("Photo","Enter your photo:",valid_types=['photo'],required=False,error_message="Error. You can only send a photo")
-    terms = fields.BooleanField("Terms of use","Accept terms of use:")
+    name = fields.StrField("Name", "Enter your name:")
+    age = fields.NumberField("Age", "Select your age:", only_int=True, key_mode=True)
+    sex = fields.ChooseField("Sex", "Select your sex:", answer_list=["male", "female"])
+    photo = fields.MediaField(
+        "Photo", "Enter your photo:",
+        valid_types=['photo'], required=False, error_message="Error. You can only send a photo")
+    terms = fields.BooleanField("Terms of use", "Accept terms of use:")
     freeze_mode = True
     close_form_but = False
     submit_button_text = "Register"
+
 
 form = TestRegisterForm()
 
@@ -338,8 +349,6 @@ form.hide_field("terms")
 
 # Show Field
 form.show_field("terms")
-
-
 ```
 
 
@@ -364,11 +373,13 @@ This is how you can receive all events inside the form. In the Form Event object
 class TestRegisterForm(BaseForm):
     update_name = "submit_register_form"
     form_title = "TBF Test Register Form"
-    name = fields.StrField("Name","Enter your name:")
-    age = fields.NumberField("Age","Select your age:",only_int=True,key_mode=True)
-    sex = fields.ChooseField("Sex","Select your sex:",answer_list=["male","female"])
-    photo = fields.MediaField("Photo","Enter your photo:",valid_types=['photo'],required=False,error_message="Error. You can only send a photo")
-    terms = fields.BooleanField("Terms of use","Accept terms of use:")
+    name = fields.StrField("Name", "Enter your name:")
+    age = fields.NumberField("Age", "Select your age:", only_int=True, key_mode=True)
+    sex = fields.ChooseField("Sex", "Select your sex:", answer_list=["male", "female"])
+    photo = fields.MediaField(
+        "Photo", "Enter your photo:",
+        valid_types=['photo'], required=False, error_message="Error. You can only send a photo")
+    terms = fields.BooleanField("Terms of use", "Accept terms of use:")
     self.hide_field("terms")
     freeze_mode = True
     close_form_but = False
@@ -379,9 +390,7 @@ class TestRegisterForm(BaseForm):
             # Show terms field only for 18+ age input
             if event.event_data.name_in_form == "age":
                 if form_data.age >= 18:
-                  self.hide_field("terms")
+                    self.hide_field("terms")
                 else:
-                  self.show_field("terms")
-
-
+                    self.show_field("terms")
 ```
