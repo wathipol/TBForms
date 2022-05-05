@@ -3,6 +3,7 @@
 # TelebotForms
 [![PyPI version](https://badge.fury.io/py/TBForms.svg)](https://badge.fury.io/py/TBForms)
 [![License](https://img.shields.io/pypi/l/TBForms)](https://github.com/wathipol/TBForms/blob/master/LICENSE)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/TBForms)
 
 Small extension for [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegramBotAPI) library for building interactive forms in Telegram bots.
 <hr/>
