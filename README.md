@@ -134,8 +134,8 @@ tbf.GLOBAL_INVALID_INPUT_TEXT = "Error. Invalide input!"
 | ------------- | ------------- |------------- |------------- |------------- |
 | chat_id  | Yes  |   | int  |Chat id for send form |
 | form  | Yes  |  | tb_forms.BaseForm | TbfForms Form object |
-| step_by_step  | No  |  | None | Step-by-Step form mode. The data will be requested one by one without returning to the state of the form |
-| auto_submit  | No  |  | None | If true the form will automatically submit when the last field has a value. If this parameter is True, chat_id: int will be passed to the function that will receive the completed form object instead of the CallbackQuery object ⚠️ |
+| step_by_step  | No  | None | bool | Step-by-Step form mode. The data will be requested one by one without returning to the state of the form |
+| auto_submit  | No  | None | bool | If true the form will automatically submit when the last field has a value. If this parameter is True, chat_id: int will be passed to the function that will receive the completed form object instead of the CallbackQuery object ⚠️ |
 
 ##### Handle form
 * form_submit_event - handle submit form event
