@@ -10,7 +10,7 @@ requirements = [
 
 setuptools.setup(
     name="TBForms",
-    version="0.9.11",
+    version="0.9.12",
     author="watdev",
     author_email="v.liubachevskyi@gmail.com",
     description="Small extension for pyTelegramBotAPI library for building interactive forms in Telegram bots.",
@@ -24,5 +24,5 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.7',
 )
