@@ -6,6 +6,9 @@ TB_FORM_TAG = "_tbf"
 DEFAULT_CANCEl_CALLBACK = "{}:default_cancel".format(TB_FORM_TAG)
 DEFAULT_CANCEl_FORM_CALLBACK = "{}:default_cancel_form".format(TB_FORM_TAG)
 
+DEFAULT_SKIP_CALLBACK = "{}:default_skip:{}".format(TB_FORM_TAG, "{}")
+DEFAULT_BACK_CALLBACK = "{}:default_back:{}".format(TB_FORM_TAG, "{}")
+
 DEFAULT_SUBMIT_CALLBACK = "{}:submit_form".format(TB_FORM_TAG)
 DEFAULT_VALUE_FROM_CALLBACK_PATTERN = "{}:call_value:{}".format(TB_FORM_TAG,"{}")
 FIELD_CLICK_CALLBACK_DATA_PATTERN = "{}:call:{}".format(TB_FORM_TAG,"{}")
@@ -39,8 +42,11 @@ class FSM:
     def reset_state(self,user_id: int) -> None:
         pass
 
-    def check_already_form(self,user_id):
-        if ":".join(str(self.get_state(user_id).state).split(":")[0:2]) == FSM_FORM_IDE:
+    def check_already_form(self, user_id, any_tbf: bool = False):
+        state_data = self.get_state(user_id)
+        if any_tbf is True and str(state_data.state).split(":")[0] == str(TB_FORM_TAG):
+            return True
+        elif ":".join(str(state_data.state).split(":")[0:2]) == FSM_FORM_IDE:
             return True
         return False
 

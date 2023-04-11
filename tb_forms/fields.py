@@ -79,9 +79,7 @@ class Field:
         self.error_message = error_message
         self.validators = self._fix_validators_type(self.validators)
         self.field_hidden_data = field_hidden_data
-
-
-
+        self._skiped: bool = False
 
     def format_return_value(self,upd):
         if self.value_from_callback:
@@ -381,13 +379,11 @@ class ListField(Field):
         self.min_len = min_len
         self.max_len = max_len
 
-
     def format_return_value(self,upd):
         return upd.text
 
     def before_input_update(self,tbf,form,update):
         self.value = None
-
 
     def manualy_handle_callback(self,tbf,call,form):
         new_value_id = call.data.split(":")[2]
