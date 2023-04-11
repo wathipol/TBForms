@@ -134,6 +134,8 @@ tbf.GLOBAL_INVALID_INPUT_TEXT = "Error. Invalide input!"
 | ------------- | ------------- |------------- |------------- |------------- |
 | chat_id  | Yes  |   | int  |Chat id for send form |
 | form  | Yes  |  | tb_forms.BaseForm | TbfForms Form object |
+| step_by_step  | No  |  | None | Step-by-Step form mode. The data will be requested one by one without returning to the state of the form |
+| auto_submit  | No  |  | None | If true the form will automatically submit when the last field has a value. If this parameter is True, chat_id: int will be passed to the function that will receive the completed form object instead of the CallbackQuery object ⚠️ |
 
 ##### Handle form
 * form_submit_event - handle submit form event
@@ -182,6 +184,11 @@ def form_event_update(call,form_data):
 | input_not_valid | No  | "Invalid input..."  | str  | Invalide input default error message text  |
 | form_global_error_message | No  |   | str  | Global form default error message text  |
 | form_valid_error | No  | "Error! You may have filled in some of the fields incorrectly. ⚠️" | str  | Form default pre-submit validation error message text |
+| back_text | No  | "🔙"  | str  | Back button text  |
+| default_step_by_step | No  | False  | bool  | Step-by-Step form mode. The data will be requested one by one without returning to the state of the form. It's better to use send_form parameter instead of defining this param ❗️  |
+| step_by_step_skip_text | No  | "➡️"  | str  | Skip button text for optional field in step-by-step mode  |
+| default_auto_submit | No  | False  | bool  | Auto-submit form mode. If true the form will automatically submit when the last field has a value. It's better to use send_form parameter instead of defining this param ❗️. If this parameter is True, chat_id: int will be passed to the function that will receive the completed form object instead of the CallbackQuery object ⚠️ |
+
 
 #### Fields
 ```python
