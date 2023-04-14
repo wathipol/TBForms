@@ -486,7 +486,7 @@ class DateTimeField(Field):
     def __init__(
                 self, title=None, input_text=None,
                 validators=[], required=True, read_only=False, error_message=None,
-                min_len=1, max_len=None, default_value: Optional[datetime] = None, field_hidden_data=None,
+                default_value: Optional[datetime] = None, field_hidden_data=None,
                 only_time: Optional[bool] = False, only_date: Optional[bool] = False,
                 custom_month_names: Optional[List[str]] = None,
                 years_range: Optional[int] = 20, current_year_only: Optional[bool] = True,
