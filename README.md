@@ -25,6 +25,7 @@ Small extension for [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegramBo
         * [NumberField](#numberfield)
         * [BooleanField](#booleanfield)
         * [ChooseField](#choosefield)
+        * [DateTimeField](#datetimefield)
     * [Advanced](#advanced)
       * [Pre-submit validation](#pre-submit-validation)
       * [Field visibility](#field-visibility)
@@ -267,7 +268,7 @@ True\False input
 ##### ChooseField
 Select input from list of values
 ```python
--> bool
+-> List[str]
 ```
 | Args  | Required? |  Default  |  Type   | Description     |
 | ------------- | ------------- |------------- |------------- |------------- |
@@ -284,7 +285,7 @@ Select input from list of values
 ##### DateTimeField
 Select datetime object
 ```python
--> bool
+-> Union[datetime, time, date]
 ```
 | Args  | Required? |  Default  |  Type   | Description     |
 | ------------- | ------------- |------------- |------------- |------------- |
