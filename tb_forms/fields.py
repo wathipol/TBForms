@@ -1,10 +1,12 @@
 import random
 import string
 import dill
+from datetime import datetime, date, timedelta, time
 from . import validators as fvalidators
 from .validators import all_content_types,Validator
 from .tbf_types import FormEvent
 from telebot import types
+from typing import Optional, List
 from .tb_fsm import (
     TB_FORM_TAG,DEFAULT_CANCEl_CALLBACK,
     FIELD_CLICK_CALLBACK_DATA_PATTERN,
@@ -320,9 +322,11 @@ class ChooseField(Field):
         return keyboard
 
 
-    def manualy_handle_callback(self,tbf,call,form):
+    def manualy_handle_callback(self, tbf, call, form):
         new_value_id = call.data.split(":")[2]
         if str(new_value_id) == "save_field":
+            event = FormEvent("field_input", sub_event_type="callback", event_data=self)
+            form.event_listener(event, form.create_update_form_object(action="event_callback"))
             tbf.bot.delete_message(call.message.chat.id,call.message.message_id)
             self._offset = 0
             return tbf.send_form(call.from_user.id,form,need_init=False)
@@ -434,3 +438,192 @@ class ListField(Field):
             self.bot.reply_to(message,error_text)
 
 
+class DateTimeField(Field):
+    BACK_BUTTON_TEXT = "🔙"
+    HOURS_ICON_TEXT = "🕐"
+    FORM_ICON = "📅"
+
+    EN_MONTH_NAMES: List[str] = [
+        'January', 'February', 'March',
+        'April', 'May', 'June', 'July', 
+        'August', 'September', 
+        'October', 'November', 'December'
+    ]
+    UA_MONTH_NAMES: List[str] = [
+        'Січень', 'Лютий', 'Березень', 
+        'Квітень', 'Травень', 'Червень',
+        'Липень', 'Серпень', 'Вересень',
+        'Жовтень', 'Листопад', 'Грудень'
+    ]
+    RU_MONTH_NAMES: List[str] = [
+        'Январь', 'Февраль', 'Март',
+        'Апрель', 'Май', 'Июнь',
+        'Июль', 'Август', 'Сентябрь',
+        'Октябрь', 'Ноябрь', 'Декабрь'
+    ]
+
+    @classmethod
+    def get_last_month_day(cls, from_year: int = None, from_month: int = None):
+        today = datetime.today()
+        last_day_date = datetime(
+            from_year if from_year is not None else today.year,
+            today.month if from_month is None else from_month, 1) + timedelta(days=32 - today.day)
+        last_day_date = last_day_date.replace(day=1) - timedelta(days=1)
+        return int(last_day_date.date().day)
+    
+    @classmethod
+    def days_in_month(cls, year: int, month: int):
+        if month == 2:
+            if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0):
+                return 29
+            else:
+                return 28
+        elif month in [4, 6, 9, 11]:
+            return 30
+        else:
+            return 31
+
+    def __init__(
+                self, title=None, input_text=None,
+                validators=[], required=True, read_only=False, error_message=None,
+                min_len=1, max_len=None, default_value: Optional[datetime] = None, field_hidden_data=None,
+                only_time: Optional[bool] = False, only_date: Optional[bool] = False,
+                custom_month_names: Optional[List[str]] = None,
+                years_range: Optional[int] = 20, current_year_only: Optional[bool] = True,
+                seconds_input: bool = False,
+                month_names_lang_code: Optional[str] = "EN",
+                custom_hours_icon_text: Optional[str] = None):
+        if month_names_lang_code not in ["EN", "RU", "UA"]:
+            raise AttributeError('month_names_lang_code not in ["EN", "RU", "UA"]')
+        self.years_range = years_range
+        self.hours_icon_text = custom_hours_icon_text if custom_hours_icon_text is not None else self.HOURS_ICON_TEXT
+        self.current_year_only = current_year_only
+        self.only_time = only_time
+        self.only_date = only_date
+        self.seconds_input = seconds_input
+        month_list = getattr(self, "{}_MONTH_NAMES".format(month_names_lang_code))
+        if custom_month_names is not None:
+            if len(custom_month_names) != 12:
+                raise IndexError("custom_month_names len != 12")
+            month_list = custom_month_names
+        self.month_list = month_list
+        all_validators = []
+        for validator in validators:
+            all_validators.append(validator)
+        super().__init__(
+            title=title, input_text=input_text, validators=all_validators,
+            required=required, read_only=read_only, error_message=error_message,
+            default_value=default_value,field_hidden_data=field_hidden_data, value_from_callback=True)
+        self.value_from_callback_manual_mode = True
+        self.without_system_key = True
+
+    def format_return_value(self, upd):
+        new_value_id = str(upd.data).split(":")[2]
+        new_value = self.get_variable_data(new_value_id)
+        if len(self.value) == 0:
+            new_value = int(new_value)
+        elif len(self.value) == 1:
+            new_value = int(self.month_list.index(new_value)) + 1
+        elif len(self.value) == 2 or len(self.value) == 3:
+            new_value = int(''.join(filter(str.isdigit, str(new_value))))
+        elif len(self.value) == 4 or len(self.value) == 5:
+            new_value = int(str(new_value).split(":")[-1])
+        self.value.append(new_value)
+        if len(self.value) == 3 and self.only_date is True:
+            self.value.extend([None, None])
+            if self.seconds_input is True:
+                self.value.append(None)
+        
+        if (len(self.value) == 5 and self.seconds_input is False) or (len(self.value) == 6 and self.seconds_input):
+            if self.only_date:
+                return date(year=self.value[0], month=self.value[1], day=self.value[2])
+            elif self.only_time:
+                return time(
+                    hour=self.value[3], minute=self.value[4], second=self.value[5] if self.seconds_input else None)
+            else:
+                return datetime(
+                    year=self.value[0], month=self.value[1],
+                    day=self.value[2], hour=self.value[3], minute=self.value[4])
+
+    def create_variables_keys(self, cancel_but: bool = True):
+        keyboard = types.InlineKeyboardMarkup()
+        key_list = []
+        select_list = []
+        row_size = 4
+        if not isinstance(self.value, list):
+            self.value = []
+        if len(self.value) == 0 and self.only_time is False and self.current_year_only is True:
+            self.value = [int(datetime.now().year)]
+        elif len(self.value) == 0 and self.only_time is True:
+            self.value = [None, None, None]
+        
+        if len(self.value) == 3:
+            select_list = ["{}: {}".format(str(i), self.hours_icon_text) for i in range(1, 24)]
+            select_list.append("00: {}".format(self.hours_icon_text))
+        elif len(self.value) == 4:
+            row_size = 6
+            select_list.append("{}:00".format(self.value[3]))
+            select_list = ["{}:{}".format(self.value[3], str(i) if i >= 10 else f"0{i}" ) for i in range(1, 60)]
+        elif len(self.value) == 5 and self.seconds_input is True:
+            row_size = 5
+            select_list.append("{}:{}:00".format(self.value[3], self.value[4]))
+            select_list.extend(["{}:{}:{}".format(
+                self.value[3], self.value[4], str(i) if i >= 10 else f"0{i}" ) for i in range(1, 60)])
+        
+        elif len(self.value) == 0:
+            select_list.append(int(datetime.now().year))
+            for i in range(1, int(self.years_range) + 1):
+                select_list.append(int(select_list[-1]) - 1)
+        elif len(self.value) == 1:
+            select_list = list(self.month_list)
+            row_size = 3
+        elif len(self.value) == 2:
+            m_name = self.month_list[int(self.value[1]) - 1]
+            last_month_day = self.days_in_month(int(self.value[0]), int(self.value[1]))
+            select_list = ["{} {}".format(m_name, str(i)) for i in range(1, last_month_day + 1)]
+
+        for i in select_list:
+            v_id = self._append_variable_data(i)
+            key = types.InlineKeyboardButton(text=i, callback_data=DEFAULT_VALUE_FROM_CALLBACK_PATTERN.format(v_id))
+            key_list.append(key)
+        for row in split_list(key_list, row_size):
+            keyboard.row(*row)
+        if cancel_but is True:
+            keyboard.row(*[types.InlineKeyboardButton(
+                text=self.BACK_BUTTON_TEXT, callback_data=DEFAULT_VALUE_FROM_CALLBACK_PATTERN.format("back_to"))])
+        return keyboard
+
+    def manualy_handle_callback(self,tbf,call,form):
+        if str(call.data).split(":")[2] == "back_to":
+            tbf.bot.delete_message(call.message.chat.id,call.message.message_id)
+            self.value = None
+            return tbf.send_form(call.from_user.id,form,need_init=False)
+        done_value = self.format_return_value(call)
+        if done_value is not None:
+            self.value = done_value
+            event = FormEvent("field_input", sub_event_type="callback", event_data=self)
+            form.event_listener(event, form.create_update_form_object(action="event_callback"))
+            tbf.bot.delete_message(call.message.chat.id, call.message.message_id)
+            return tbf.send_form(call.from_user.id, form, need_init=False)
+
+        new_keyboard =  self.create_variables_keys(cancel_but=False)
+        settings = tbf._get_form_settings(form,prepare_update=call.message.chat.id)
+        cancel_key = types.InlineKeyboardButton(text=settings["BACK_TEXT"], callback_data=DEFAULT_VALUE_FROM_CALLBACK_PATTERN.format("back_to"))
+        new_keyboard.row(cancel_key)
+        tbf.fsm.set_state(call.from_user.id,FSM_GET_FIELD_VALUE, form=form._form_dumps(),field_id=self._id)
+        msg = tbf.bot.edit_message_reply_markup(chat_id=call.message.chat.id,message_id=call.message.message_id,reply_markup=new_keyboard)
+        return msg
+
+    def message_text_data_format(self):
+        if not isinstance(self.value, (datetime, date, time)):
+            return
+        if self.only_date:
+            return self.value.strftime("%Y.%m.%d")
+        elif self.only_time:
+            return self.value.strftime("%H:%M:%S")
+        return self.value.strftime("%Y.%m.%d %H:%M:%S")
+
+    def replace_field_icon(self):
+        if not isinstance(self.value, (datetime, date, time)):
+            return
+        return str(self.FORM_ICON)

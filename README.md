@@ -39,7 +39,13 @@ $ pip install TBForms
 
 Demo for [Example](#quickstart)
 
-<img src="docs/demo.gif" width="250" />
+- default mode:
+
+<img src="docs/base-form.mp4" width="250" />
+
+- step-by-step mode:
+
+<img src="docs/base-form-step-by-step.mp4" width="250" />
 
 
 
@@ -56,8 +62,11 @@ class TestRegisterForm(BaseForm):
     update_name = "submit_register_form"
     form_title = "TBF Test Register Form"
     name = fields.StrField("Name", "Enter your name:")
-    age = fields.NumberField("Age", "Select your age:", only_int=True, key_mode=True)
+    group_number = fields.NumberField(
+        "Group number", "Select your group number:", only_int=True, key_mode=True, input_range=(1, 10))
     sex = fields.ChooseField("Sex", "Select your sex:", answer_list=["male", "female"])
+    date_of_birth = fields.DateTimeField("Date of Birth", "Select your date of birth: ",
+                                         only_date=True, current_year_only=False, years_range=80)
     photo = fields.MediaField(
         "Photo", "Enter your photo:",
         valid_types=['photo'], required=False, error_message="Error. You can only send a photo")
