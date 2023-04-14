@@ -25,6 +25,7 @@ Small extension for [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegramBo
         * [NumberField](#numberfield)
         * [BooleanField](#booleanfield)
         * [ChooseField](#choosefield)
+        * [DateTimeField](#datetimefield)
     * [Advanced](#advanced)
       * [Pre-submit validation](#pre-submit-validation)
       * [Field visibility](#field-visibility)
@@ -39,7 +40,13 @@ $ pip install TBForms
 
 Demo for [Example](#quickstart)
 
-<img src="docs/demo.gif" width="250" />
+- default mode:
+
+<img src="docs/base-form.gif" width="250" />
+
+- step-by-step mode:
+
+<img src="docs/base-form-step-by-step.gif" width="250" />
 
 
 
@@ -56,8 +63,11 @@ class TestRegisterForm(BaseForm):
     update_name = "submit_register_form"
     form_title = "TBF Test Register Form"
     name = fields.StrField("Name", "Enter your name:")
-    age = fields.NumberField("Age", "Select your age:", only_int=True, key_mode=True)
+    group_number = fields.NumberField(
+        "Group number", "Select your group number:", only_int=True, key_mode=True, input_range=(1, 10))
     sex = fields.ChooseField("Sex", "Select your sex:", answer_list=["male", "female"])
+    date_of_birth = fields.DateTimeField("Date of Birth", "Select your date of birth: ",
+                                         only_date=True, current_year_only=False, years_range=80)
     photo = fields.MediaField(
         "Photo", "Enter your photo:",
         valid_types=['photo'], required=False, error_message="Error. You can only send a photo")
@@ -258,7 +268,7 @@ True\False input
 ##### ChooseField
 Select input from list of values
 ```python
--> bool
+-> List[str]
 ```
 | Args  | Required? |  Default  |  Type   | Description     |
 | ------------- | ------------- |------------- |------------- |------------- |
@@ -271,6 +281,29 @@ Select input from list of values
 | answer_list | Yes  | [] | list  | Values for select |
 | multiple | No  | False | bool  | Aviable multiple select |
 | answer_mapping | No  |  | dict  | Dictionary for replace return selected value |
+
+##### DateTimeField
+Select datetime object
+```python
+-> Union[datetime, time, date]
+```
+| Args  | Required? |  Default  |  Type   | Description     |
+| ------------- | ------------- |------------- |------------- |------------- |
+| title | Yes  |   | str  |Field button title in form |
+| input_text | Yes  |  | str  | Input message text |
+| required | No  | True  | bool  | required for submit? |
+| default_value | No  |  | Union[datetime, date, time] | Default field value |
+| validators | No  |  | List[Callable \| tb_forms.validators.Validator  ]  | Default field value |
+| error_message | No  |  | str  | Validation error message text |
+| only_time | No  | None | bool  | Input time only |
+| only_date | No  | None | bool  | Input date only |
+| custom_month_names | No  | None | List[str]  | List with custom names for months. Must be 12 elements long! |
+| years_range | No  | 20 | int  | Range of years to select from current in descending order |
+| current_year_only | No  | True | bool  | If True, the year selection will be skipped and the value will be the current year. |
+| seconds_input | No  | False | bool  | Request seconds|
+| month_names_lang_code | No  | "EN" | str  | Language code for month names. By default, English ("EN"), "RU" - in Russian, and "UA" - Ukrainian are also available. |
+| custom_hours_icon_text | No  | "🕐" | str  | Icon for the button for selecting the time (hours) next to the number|
+
 
 ### Advanced
 
