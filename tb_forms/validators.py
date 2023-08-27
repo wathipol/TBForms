@@ -75,7 +75,7 @@ class isMedia(Validator):
     def get_media_data(self,upd):
         msg_type = str(upd.content_type)
         if msg_type == "text" and self.only_text_aviable:
-            return tbf_types.MediaData(upd.text,msg_type,None,upd)
+            return tbf_types.MediaData(upd.text, msg_type, None, upd if self._save_original_update is True else None)
 
 
         media_data = {
@@ -94,7 +94,7 @@ class isMedia(Validator):
         return tbf_types.MediaData(**media_data)
 
 
-    def validate(self,upd):
+    def validate(self, upd):
         msg_type = str(upd.content_type)
         if msg_type == "text":
             if self.only_text_aviable:
