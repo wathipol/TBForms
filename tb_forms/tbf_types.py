@@ -1,9 +1,11 @@
+from typing import Optional
+from telebot.types import Message
 
 
 class MediaData:
     """ Данные медиа поля """
 
-    def __init__(self,caption,media_type,file_id,original_update):
+    def __init__(self, caption: Optional[str], media_type: str, file_id: str, original_update: Optional[Message] = None):
         self.caption = caption
         self.media_type = media_type
         self.file_id = file_id
@@ -12,15 +14,16 @@ class MediaData:
 
     def __repr__(self):
         return "<MediaData(caption='{}', media_type='{}', file_id='{}',original_update=<Telebot Message object>)>".format( \
-            self.caption,self.media_type,self.file_id
+            self.caption, self.media_type, self.file_id
         )
 
 
 class FormEvent:
-    def __init__(self,event_type: str,sub_event_type = None,event_data = None):
+    def __init__(self, event_type: str, sub_event_type: str = None, event_data = None):
         self.event_type = event_type
         self.sub_event_type = sub_event_type
         self.event_data = event_data
 
     def __repr__(self):
-        return "<FormEvent(event_type='{}',sub_event_type='{}',event_data={})>".format(self.event_type,self.sub_event_type,self.event_data)
+        return "<FormEvent(event_type='{}',sub_event_type='{}',event_data={})>".format(
+            self.event_type, self.sub_event_type, self.event_data)

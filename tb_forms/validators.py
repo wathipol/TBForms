@@ -1,4 +1,6 @@
 from . import tbf_types
+from typing import Optional
+
 
 all_content_types = ['text', 'audio', 'document', 'photo', 'sticker', 'video', 'video_note', 'voice', 'location', 'contact', 'new_chat_members', 'left_chat_member', 'new_chat_title', 'new_chat_photo', 'delete_chat_photo', 'group_chat_created', 'supergroup_chat_created', 'channel_chat_created', 'migrate_to_chat_id', 'migrate_from_chat_id', 'pinned_message']
 
@@ -64,10 +66,11 @@ class isNumber(Validator):
 
 class isMedia(Validator):
     """ Валидация только медиа сообщений """
-    def __init__(self,valid_types=[],caption_required=False,only_text_aviable=False):
+    def __init__(self, valid_types=[], caption_required=False, only_text_aviable=False, save_original_update: Optional[bool] = True):
         self.valid_types = valid_types
         self.caption_required = caption_required
         self.only_text_aviable = only_text_aviable
+        self._save_original_update = save_original_update
 
     def get_media_data(self,upd):
         msg_type = str(upd.content_type)
@@ -79,7 +82,7 @@ class isMedia(Validator):
             "caption":upd.caption,
             "media_type":msg_type,
             "file_id":None,
-            "original_update":upd
+            "original_update": upd if self._save_original_update is True else None
         }
 
         if msg_type == "document":

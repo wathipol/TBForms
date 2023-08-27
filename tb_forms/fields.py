@@ -166,9 +166,16 @@ class MediaField(Field):
     }
 
 
-    def __init__(self,title=None,input_text=None,validators=[],required=True,read_only=False,error_message=None,valid_types=[],caption_required=False,only_text_aviable=False,field_hidden_data=None):
+    def __init__(
+            self, title=None, input_text=None, validators=[], required=True, read_only=False,
+            error_message=None, valid_types=[], caption_required=False, only_text_aviable=False, field_hidden_data=None,
+            save_original_update: Optional[bool] = True):
         self.valid_types = valid_types
-        self.media_validator = fvalidators.isMedia(valid_types=valid_types,caption_required=caption_required,only_text_aviable=only_text_aviable)
+        self.media_validator = fvalidators.isMedia(
+            valid_types=valid_types,
+            caption_required=caption_required,
+            only_text_aviable=only_text_aviable,
+            save_original_update=save_original_update)
         all_validators = [self.media_validator]
         for validator in validators:
             all_validators.append(validator)
