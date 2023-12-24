@@ -1,8 +1,10 @@
+import dill
+import pickle
 from telebot import types
 from . import fields
 from .validators import all_content_types
 from . import validators
-from .tbf_types import FormEvent
+from .tbf_types import FormEvent, NestedFormData
 from .tb_fsm import (
     DEFAULT_CANCEl_CALLBACK,
     DEFAULT_CANCEl_FORM_CALLBACK,
@@ -12,7 +14,6 @@ from .tb_fsm import (
 import types as build_in_types
 from typing import Union, Optional
 from collections import namedtuple
-import pickle
 
 
 class BaseForm:
@@ -64,11 +65,12 @@ class BaseForm:
     _form_hidden_list = []
     _step_by_step = None
     _auto_submit = None
+    _nested_to_data = None
 
     def __init__(self):
         pass
 
-    def init_form(self):
+    def init_form(self, nested_to_data: Optional[NestedFormData] = None):
         iter_dict = self.__dict__
         if not iter_dict:
             iter_dict = self.__class__.__dict__
@@ -83,6 +85,9 @@ class BaseForm:
         self._form_id = fields.Field._generate_id(6)
         self._step_by_step = self.default_step_by_step
         self._auto_submit = self.default_auto_submit
+        self._nested_to_data = nested_to_data
+        if self._nested_to_data is not None and self._step_by_step is True and self._auto_submit is True:
+            raise ValueError("Nested form can't be auto submit and step_by_step in one time [tempory]")
         self.form_data = self.form_hidden_data
         self.inited = True
 
@@ -160,7 +165,6 @@ class BaseForm:
                 return ind
             ind += 1
         raise IndexError("Field not found")
-            
 
     def get_form_text(self):
         text = ""
@@ -204,8 +208,8 @@ class BaseForm:
         return namedtuple(self.__class__.__name__, out_map.keys())(*out_map.values())
 
     def _form_dumps(self):
-        return pickle.dumps(self)
+        return dill.dumps(self)
 
     @staticmethod
     def form_loads(dumps_data):
-        return pickle.loads(dumps_data)
+        return dill.loads(dumps_data)

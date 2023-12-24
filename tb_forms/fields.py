@@ -1,10 +1,9 @@
 import random
 import string
-import dill
 from datetime import datetime, date, timedelta, time
 from . import validators as fvalidators
-from .validators import all_content_types,Validator
-from .tbf_types import FormEvent
+from .validators import all_content_types, Validator
+from .tbf_types import FormEvent, NestedFormData, DillPickle
 from telebot import types
 from typing import Optional, List
 from .tb_fsm import (
@@ -17,7 +16,7 @@ from .tb_fsm import (
 
 
 def split_list(arr, wanted_parts=1):
-    """Разбить список на подсписки"""
+    """ Разбить список на подсписки """
     arrs = []
     while len(arr) > wanted_parts:
         pice = arr[:wanted_parts]
@@ -27,24 +26,9 @@ def split_list(arr, wanted_parts=1):
     return arrs
 
 
-
 def islambda(v):
     LAMBDA = lambda:0
     return isinstance(v, type(LAMBDA)) and v.__name__ == LAMBDA.__name__
-
-
-class DillPickle:
-    """ Обёртка для сериализации лямбда функций и других типов без поддержки """
-    def __init__(self, e):
-        self.e = e
-
-    def __getstate__(self):
-        return dill.dumps(self.e)
-    def __setstate__(self, state):
-        self.e = dill.loads(state)
-
-    def __call__(self, *args, **kwargs):
-        return self.e(*args, **kwargs)
 
 
 class Field:
@@ -65,7 +49,10 @@ class Field:
         return valid_list
 
 
-    def __init__(self,title=None,input_text=None,validators=[],required=True,read_only=False,value_from_callback=False,error_message=None,default_value=None,field_hidden_data=None):
+    def __init__(
+                self, title: str = None, input_text: str = None,
+                validators=[], required=True, read_only=False, value_from_callback=False,
+                error_message=None, default_value=None, field_hidden_data=None):
         self.title = title
         self.input_text = input_text
         self.validators = validators
@@ -75,6 +62,7 @@ class Field:
         self.value_from_callback = value_from_callback
         self.value_from_callback_manual_mode = False
         self.value_from_message_manual_mode = False
+        self.to_input_state_manual_mode = False
         self.without_system_key = False
         self.value = default_value
         self.variable_data = {}
@@ -125,11 +113,13 @@ class Field:
             return self.variable_data[v_id]
 
     def manualy_handle_callback(self,tbf,call,form):
-        pass
+        raise NotImplementedError("Method is not initialized")
 
     def manualy_handle_message(self,tbf,message,form):
-        pass
+        raise NotImplementedError("Method is not initialized")
 
+    def to_input_state_manually(self, tbf, form, settings, update):
+        raise NotImplementedError("Method is not initialized")
 
     def create_variables_keys(self):
         """При использовании режима value_from_callback,
@@ -297,7 +287,6 @@ class ChooseField(Field):
         if upd not in list(self.answer_mapping.keys()):
             return upd
         return self.answer_mapping[upd]
-
 
     def create_variables_keys(self):
         keyboard = types.InlineKeyboardMarkup()
@@ -634,3 +623,57 @@ class DateTimeField(Field):
         if not isinstance(self.value, (datetime, date, time)):
             return
         return str(self.FORM_ICON)
+
+class NestedFormField(Field):
+    def __init__(
+            self,
+            title=None,
+            form_to_upd: "tb_forms.form.BaseForm" = None,
+            required=True,
+            default_value=None):
+        super().__init__(
+            title=title, input_text=None, validators=[],
+            required=required, read_only=False,
+            error_message=None,
+            default_value=default_value, field_hidden_data=None)
+        
+        if form_to_upd.__class__.__bases__[0].__name__ != "BaseForm":
+            raise TypeError("Form to update must be BaseForm object type")
+
+        self.form_to_upd = form_to_upd
+        self.value_from_callback_manual_mode = True
+        self.value_from_message_manual_mode = True
+        self.to_input_state_manual_mode = True
+
+    def format_return_value(self,upd):
+        return str(self.form_to_upd)
+
+    def before_input_update(self, tbf, form, update):
+        self.value = None
+
+    def to_input_state_manually(self, tbf, form, settings, update):
+
+        # get chat and message id
+        chat_id = None
+        msg_id = None
+        if isinstance(update, types.Message):
+            chat_id = update.chat.id
+            msg_id = update.message_id
+        elif isinstance(update, types.CallbackQuery):
+            chat_id = update.message.chat.id
+            msg_id = update.message.message_id
+        elif isinstance(update, int):
+            chat_id = update
+        
+        # Delete form state msg if exist
+        if msg_id is not None:
+            try:
+                tbf.bot.delete_message(chat_id, msg_id)
+            except Exception as e:
+                pass
+        
+        # Send nested form
+        need_init = not bool(self.form_to_upd.inited)
+        nested_form_data = NestedFormData(form._form_dumps(), self._id)
+        tbf.send_form(
+            chat_id, self.form_to_upd, need_init=need_init, nested_to_data=nested_form_data)

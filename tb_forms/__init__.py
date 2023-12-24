@@ -3,7 +3,7 @@ from . import fields
 from . import tb_fsm as ffsm
 from .validators import all_content_types
 from . import validators
-from .tbf_types import FormEvent
+from .tbf_types import FormEvent, NestedFormData
 from .tb_fsm import (
     TB_FORM_TAG,
     DEFAULT_CANCEl_CALLBACK,
@@ -18,6 +18,7 @@ from .tb_fsm import (
 )
 from .form import BaseForm
 from collections import namedtuple
+from typing import Optional
 import pickle
 import logging
 import types as build_in_types
@@ -380,11 +381,17 @@ class TelebotForms:
 
     def send_form(
             self, user_id: int, form,
-            step_by_step: bool = None, auto_submit: bool = None, need_init=True):
+            step_by_step: bool = None,
+            auto_submit: bool = None,
+            need_init=True, nested_to_data: Optional[NestedFormData] = None):
         if not isinstance(form, BaseForm):
             raise TypeError("form must be BaseForm object")
         elif need_init:
-            form.init_form()
+            try:
+                form.init_form(nested_to_data=nested_to_data)
+            except Exception as e:
+                self.fsm.reset_state(user_id)
+                raise e
         if step_by_step is not None:
             form._step_by_step = step_by_step
         if auto_submit is not None:
@@ -442,6 +449,8 @@ class TelebotForms:
         return msg
 
     def to_input_state(self, form, field, settings, update):
+        if field.to_input_state_manual_mode is True:
+            return field.to_input_state_manually(self, form, settings, update)
         text = field.input_text
         if field.value_from_callback:
             keyboard = field.create_variables_keys()
@@ -494,7 +503,6 @@ class TelebotForms:
             chat_id, FSM_GET_FIELD_VALUE,
             form=form._form_dumps(), field_id=field._id, from_callback=field.value_from_callback)
 
-
     def callback_events(self, call):
         form_status = self.fsm.check_already_form(int(call.from_user.id))
         if not form_status:
@@ -544,6 +552,16 @@ class TelebotForms:
         if msg_id is not None:
             self.bot.delete_message(chat_id, msg_id)
         self.fsm.reset_state(chat_id)
+
+        if form._nested_to_data is not None:
+            # back to main form if current is nested form object
+            nested_form = BaseForm.form_loads(form._nested_to_data.form_data)
+            nested_form_field = nested_form.get_field_by_id(form._nested_to_data.field_id)
+            nested_form_field.value = form_to_upd
+            idle_state = "{}:{}".format(FSM_FORM_IDE, form._form_id)
+            self.fsm.set_state(chat_id, idle_state, form=nested_form._form_dumps())
+            self.send_form(chat_id, nested_form, need_init=False)
+            return
         self.to_submit_form(form.get_update_name(), call if msg_id is not None else chat_id, form_to_upd)
 
     def deffault_cancel_input(self, call):
@@ -610,6 +628,16 @@ class TelebotForms:
         except Exception as e:
             pass
         self.fsm.reset_state(call.message.chat.id)
+
+        if form._nested_to_data is not None:
+            # back to main form if current is nested form object
+            nested_form = BaseForm.form_loads(form._nested_to_data.form_data)
+            nested_form_field = nested_form.get_field_by_id(form._nested_to_data.field_id)
+            nested_form_field.value = None
+            idle_state = "{}:{}".format(FSM_FORM_IDE, form._form_id)
+            self.fsm.set_state(call.message.chat.id, idle_state, form=nested_form._form_dumps())
+            self.send_form(call.message.chat.id, nested_form, need_init=False)
+            return
         self.to_cancel_form(form.get_update_name(), call, form_to_upd)
 
     def msg_mode_input(self, message):
