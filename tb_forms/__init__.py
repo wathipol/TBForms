@@ -23,7 +23,7 @@ import pickle
 import logging
 import types as build_in_types
 
-__version__ = "0.9.11"
+__version__ = "0.9.16"
 
 
 class EventCollector:
