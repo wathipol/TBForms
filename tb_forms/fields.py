@@ -645,7 +645,7 @@ class NestedFormField(Field):
         self.value_from_message_manual_mode = True
         self.to_input_state_manual_mode = True
 
-    def format_return_value(self,upd):
+    def format_return_value(self, upd):
         return str(self.form_to_upd)
 
     def before_input_update(self, tbf, form, update):
